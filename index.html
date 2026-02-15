@@ -2,44 +2,34 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>你被骗了</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{
-    background:#000;
-    min-height:100vh;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    color:#fff;
-    font-family:Arial,sans-serif;
-  }
-  .big{
-    font-size:120px;
-    font-weight:bold;
-    color:red;
-    margin-bottom:30px;
-  }
-  .small{
-    font-size:18px;
-    color:#aaa;
-  }
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三角洲行动 - 威龙红皮领取</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
 
-<div class="big">你被骗了</div>
-<div class="small" id="info">made by xytwuming | 本页访问次数：0</div>
+<div class="w-full max-w-md text-center">
+  <!-- 三角洲官方LOGO -->
+  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Delta_Force_Logo_CN.png/640px-Delta_Force_Logo_CN.png" 
+       class="w-32 mx-auto mb-4">
 
-<script>
-// 访问次数
-let count = localStorage.getItem('visitCount') || 0;
-count = Number(count) + 1;
-localStorage.setItem('visitCount', count);
-document.getElementById('info').innerText = 
-  `made by xytwuming | 本页访问次数：${count}`;
-</script>
+  <!-- 威龙红皮大图 -->
+  <img src="https://img.08188.com/2024/11/14/6386713534803125086.jpg" 
+       class="w-full rounded-xl shadow-2xl mb-4">
+
+  <h1 class="text-red-500 text-2xl font-bold">威龙·凌霄戍卫 红皮领取</h1>
+  <p class="text-gray-400 mt-1 mb-6">填写手机号即可领取限定皮肤</p>
+
+  <div class="bg-gray-800/80 p-5 rounded-xl border border-red-900/30">
+    <input type="tel" 
+           placeholder="请输入手机号" 
+           class="w-full bg-gray-700 rounded px-3 py-2 mb-3 outline-none">
+    <button class="w-full bg-red-600 hover:bg-red-700 py-2 rounded font-bold">
+      立即领取
+    </button>
+    <p class="text-xs text-gray-500 mt-3">本页面仅为粉丝演示，非官方活动</p>
+  </div>
+</div>
 
 </body>
 </html>
