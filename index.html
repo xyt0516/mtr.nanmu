@@ -14,13 +14,21 @@
         body {
             position: relative;
             overflow-x:hidden;
-            background:#0b101c;
+            background: linear-gradient(135deg, #0b101c, #1a1a3e);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
             color:#e8edf7;
             line-height:1.7;
             opacity: 0;
             animation: pageFadeIn 1s ease forwards;
         }
-        /* ====== 流星背景动画 #9999ff 淡紫蓝流星 ====== */
+        /* ====== 背景渐变动画 ====== */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        /* ====== 流星背景动画 #9999ff 淡紫蓝流星 (数量增加) ====== */
         .star-meteor{
             position:absolute;
             top:0;
@@ -277,13 +285,23 @@
     </style>
 </head>
 <body>
-<!-- 流星背景层 -->
+<!-- 流星背景层 (数量增加到15颗) -->
 <div class="star-meteor">
-    <div class="meteor" style="left:10%;animation-duration:7s;animation-delay:0s;"></div>
-    <div class="meteor" style="left:30%;animation-duration:9s;animation-delay:2s;"></div>
-    <div class="meteor" style="left:50%;animation-duration:8s;animation-delay:4s;"></div>
-    <div class="meteor" style="left:70%;animation-duration:10s;animation-delay:1s;"></div>
-    <div class="meteor" style="left:90%;animation-duration:7.5s;animation-delay:3s;"></div>
+    <div class="meteor" style="left:5%;animation-duration:7s;animation-delay:0s;"></div>
+    <div class="meteor" style="left:15%;animation-duration:9s;animation-delay:2s;"></div>
+    <div class="meteor" style="left:25%;animation-duration:8s;animation-delay:4s;"></div>
+    <div class="meteor" style="left:35%;animation-duration:10s;animation-delay:1s;"></div>
+    <div class="meteor" style="left:45%;animation-duration:7.5s;animation-delay:3s;"></div>
+    <div class="meteor" style="left:55%;animation-duration:8.5s;animation-delay:5s;"></div>
+    <div class="meteor" style="left:65%;animation-duration:9.5s;animation-delay:0.5s;"></div>
+    <div class="meteor" style="left:75%;animation-duration:8.2s;animation-delay:2.5s;"></div>
+    <div class="meteor" style="left:85%;animation-duration:7.8s;animation-delay:4.5s;"></div>
+    <div class="meteor" style="left:10%;animation-duration:9.2s;animation-delay:1.5s;"></div>
+    <div class="meteor" style="left:20%;animation-duration:8.8s;animation-delay:3.5s;"></div>
+    <div class="meteor" style="left:30%;animation-duration:7.2s;animation-delay:5.5s;"></div>
+    <div class="meteor" style="left:40%;animation-duration:10.2s;animation-delay:0.8s;"></div>
+    <div class="meteor" style="left:60%;animation-duration:8.3s;animation-delay:2.8s;"></div>
+    <div class="meteor" style="left:80%;animation-duration:9.3s;animation-delay:4.8s;"></div>
 </div>
 
 <header>
@@ -340,4 +358,3 @@
 </footer>
 </body>
 </html>
-
