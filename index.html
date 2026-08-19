@@ -1,35 +1,226 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>三角洲行动 - 威龙红皮领取</title>
-<script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>南沐服务器 - Minecraft MTR轨道交通城市服</title>
+    <style>
+        * {
+            margin:0;
+            padding:0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei",system-ui,sans‑serif;
+        }
+        body {
+            background:#0b101c;
+            color:#e8edf7;
+            line-height:1.7;
+            opacity: 0;
+            animation: pageFadeIn 1s ease forwards;
+        }
+        @keyframes pageFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes headerSlide {
+            0% { opacity:0; transform: translateY(-30px); }
+            100% { opacity:1; transform: translateY(0); }
+        }
+        @keyframes contentSlide {
+            0% { opacity:0; transform: translateY(40px); }
+            100% { opacity:1; transform: translateY(0); }
+        }
+        /* Logo呼吸动效 */
+        @keyframes logoBreathe {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        /* 标题微光闪烁 */
+        @keyframes textGlow {
+            0% { text-shadow:0 0 8px #63a8ff44; }
+            50% { text-shadow:0 0 16px #63a8ff88; }
+            100% { text-shadow:0 0 8px #63a8ff44; }
+        }
+        /* 滚动触发卡片滑入 */
+        .pic-grid img{
+            width:100%;
+            height:auto;
+            border-radius:10px;
+            box-shadow:0 6px 22px #00000070;
+            opacity:0;
+            transform: translateY(50px);
+            animation: scrollIn 0.8s ease forwards;
+        }
+        .pic-grid img:nth-child(1){animation-delay:0.1s;}
+        .pic-grid img:nth-child(2){animation-delay:0.2s;}
+        .pic-grid img:nth-child(3){animation-delay:0.3s;}
+        .pic-grid img:nth-child(4){animation-delay:0.4s;}
+        .pic-grid img:nth-child(5){animation-delay:0.5s;}
+        .pic-grid img:nth-child(6){animation-delay:0.6s;}
+
+        @keyframes scrollIn {
+            to{
+                opacity:1;
+                transform: translateY(0);
+            }
+        }
+        /* 图片悬浮上浮放大 */
+        .pic-grid img:hover{
+            transform: scale(1.03) translateY(-6px);
+            box-shadow:0 10px 30px #2b68d860;
+            transition: all 0.3s ease;
+        }
+
+        .container{
+            max-width:1200px;
+            margin:0 auto;
+            padding:40px 20px;
+            opacity:0;
+            animation: contentSlide 0.9s ease forwards;
+            animation-delay: 0.4s;
+        }
+        header{
+            text-align:center;
+            padding:60px 20px;
+            background:linear-gradient(160deg,#162036,#0b101c);
+            opacity:0;
+            animation: headerSlide 1s ease forwards;
+            animation-delay:0.2s;
+        }
+        .logo{
+            width:160px;
+            height:160px;
+            margin:0 auto 24px;
+            animation: logoBreathe 4s ease-in-out infinite;
+        }
+        h1{
+            font-size:42px;
+            color:#63a8ff;
+            margin-bottom:12px;
+            animation:textGlow 3.5s ease-in-out infinite;
+        }
+        .subtitle{
+            font-size:18px;
+            color:#b1c8e8;
+            max-width:700px;
+            margin:0 auto;
+        }
+        .gallery-title{
+            text-align:center;
+            font-size:26px;
+            margin:60px 0 30px;
+            color:#94bfff;
+        }
+        .pic-grid{
+            display:grid;
+            grid-template-columns: repeat(auto‑fit, minmax(420px,1fr));
+            gap:22px;
+        }
+        .intro-block{
+            margin:70px 0;
+        }
+        h2{
+            font-size:28px;
+            color:#73b1ff;
+            margin-bottom:18px;
+        }
+        .text-card{
+            background:#141c30;
+            padding:28px 32px;
+            border-radius:12px;
+            margin-bottom:20px;
+            transition: 0.3s;
+        }
+        .text-card:hover{
+            box-shadow:0 0 20px #3478dd33;
+        }
+        .qrcode-area{
+            margin-top:80px;
+            text-align:center;
+        }
+        .qrcode{
+            width:340px;
+            margin:20px auto;
+            transition:0.3s;
+        }
+        .qrcode:hover{
+            transform:scale(1.02);
+            box-shadow:0 0 25px #428bff44;
+        }
+        .group-num{
+            font-size:24px;
+            color:#74c0ff;
+            font-weight:bold;
+        }
+        .friend-link{
+            margin-top:60px;
+            text-align:center;
+        }
+        .friend-link a{
+            color:#63a8ff;
+            text-decoration:none;
+            transition:0.3s;
+        }
+        .friend-link a:hover{
+            text-decoration: underline;
+            text-shadow:0 0 10px #63a8ff;
+        }
+        footer{
+            margin-top:100px;
+            padding:30px;
+            text-align:center;
+            color:#8699b8;
+            border-top:1px solid #243252;
+        }
+    </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
+<body>
+<header>
+    <img class="logo" src="logo.png" alt="南沐服务器Logo">
+    <h1>南沐服务器</h1>
+    <p class="subtitle">Minecraft Java版｜MTR轨道交通大型城市建造服务器<br>建造属于你的轨道交通网络与现代化都市</p>
+</header>
 
-<div class="w-full max-w-md text-center">
-  <!-- 三角洲官方LOGO -->
-  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Delta_Force_Logo_CN.png/640px-Delta_Force_Logo_CN.png" 
-       class="w-32 mx-auto mb-4">
+<div class="container">
+    <div class="intro-block">
+        <h2>📋 服务器介绍</h2>
+        <div class="text-card">
+            <p>南沐服务器是主打MTR模组轨道交通+现代城市建造的Minecraft Java版生存创造混合服务器。</p>
+            <br>
+            <p>✅ 使用MTR4.0轨道交通模组，完整支持列车、站台、越行线、接触网、快慢车交路运行</p>
+            <p>✅ 完整城市规划体系，线路申报审批制度，配套《南沐市轨道交通建设与管理标准》</p>
+            <p>✅ 支持AXI、Litematica投影、创世神WorldEdit建造工具，高效完成大型建筑</p>
+            <p>✅ 完整的城市片区，崇德区等已建成城区，高楼、高架桥梁、过江铁路大桥、雨雾夜景城市环境</p>
+            <p>✅ 严格用户协议，规范建设，拒绝乱建，共同打造高质量MC轨道交通城市</p>
+        </div>
+    </div>
 
-  <!-- 威龙红皮大图 -->
-  <img src="https://img.08188.com/2024/11/14/6386713534803125086.jpg" 
-       class="w-full rounded-xl shadow-2xl mb-4">
+    <h2 class="gallery-title">🖼️ 南沐市实景截图</h2>
+    <div class="pic-grid">
+        <img src="img1.png" alt="南沐摩天大楼夜景">
+        <img src="img2.png" alt="城市街道夜景">
+        <img src="img3.png" alt="雨天雾景城市">
+        <img src="img4.png" alt="公铁两用大桥列车">
+        <img src="img5.png" alt="崇德区雨景">
+        <img src="img6.png" alt="城市街道仰拍夜景">
+    </div>
 
-  <h1 class="text-red-500 text-2xl font-bold">威龙·凌霄戍卫 红皮领取</h1>
-  <p class="text-gray-400 mt-1 mb-6">填写手机号即可领取限定皮肤</p>
+    <div class="qrcode-area">
+        <h2>🚪 加入我们</h2>
+        <p>扫描下方二维码加入南沐审核群，申请进入服务器</p>
+        <img class="qrcode" src="qrcode.png" alt="南沐审核群二维码">
+        <p class="group-num">QQ群号：1062448641</p>
+    </div>
 
-  <div class="bg-gray-800/80 p-5 rounded-xl border border-red-900/30">
-    <input type="tel" 
-           placeholder="请输入手机号" 
-           class="w-full bg-gray-700 rounded px-3 py-2 mb-3 outline-none">
-    <button class="w-full bg-red-600 hover:bg-red-700 py-2 rounded font-bold">
-      立即领取
-    </button>
-    <p class="text-xs text-gray-500 mt-3">本页面仅为粉丝演示，非官方活动</p>
-  </div>
+    <div class="friend-link">
+        <h2>🤝友情链接</h2>
+        <p>怀扬工艺：<a target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=946298593">946298593</a></p>
+    </div>
 </div>
 
+<footer>
+南沐服务器 ©2026 | Minecraft MTR轨道交通城市服务器
+</footer>
 </body>
 </html>
