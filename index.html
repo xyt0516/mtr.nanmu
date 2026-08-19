@@ -12,12 +12,46 @@
             font-family: "Microsoft Yahei",system-ui,sans‑serif;
         }
         body {
+            position: relative;
+            overflow-x:hidden;
             background:#0b101c;
             color:#e8edf7;
             line-height:1.7;
             opacity: 0;
             animation: pageFadeIn 1s ease forwards;
         }
+        /* ====== 流星背景动画 #9999ff 淡紫蓝流星 ====== */
+        .star-meteor{
+            position:absolute;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            overflow:hidden;
+            z-index:-1;
+        }
+        .meteor{
+            position:absolute;
+            width:2px;
+            height:80px;
+            background:linear-gradient(to bottom, rgba(153,153,255,0), #9999ff);
+            opacity:0;
+            transform: rotate(-45deg);
+            animation: meteorMove linear infinite;
+        }
+        @keyframes meteorMove {
+            0%{
+                transform:translateX(0) translateY(-120px) rotate(-45deg);
+                opacity:0;
+            }
+            10%{opacity:0.7;}
+            90%{opacity:0.6;}
+            100%{
+                transform:translateX(450px) translateY(1200px) rotate(-45deg);
+                opacity:0;
+            }
+        }
+
         @keyframes pageFadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -136,43 +170,31 @@
             color:#73b1ff;
             margin-bottom:18px;
         }
-        /* ========== 液态玻璃卡片 替代原来深色卡片 ========== */
-        .text-card{
-            position:relative;
-            background:rgba(153,153,255,0.08);
-            backdrop-filter: blur(14px) saturate(160%);
-            -webkit-backdrop-filter: blur(14px) saturate(160%);
-            border:1px solid rgba(153,153,255,0.22);
-            padding:28px 32px;
-            border-radius:14px;
-            margin-bottom:20px;
-            transition: 0.35s ease;
-        }
-        .text-card:hover{
-            border-color:rgba(153,153,255,0.4);
-            box-shadow:0 0 24px #9999ff28;
-        }
 
-        /* ========== 鸿蒙液态玻璃按钮组 ========== */
+        /* ========== 按钮组：横排、两个按钮固定同等宽度 ========== */
         .btn-group{
-            margin-top:26px;
+            margin-bottom:26px;
             display:flex;
-            gap:18px;
+            gap:20px;
             flex-wrap:wrap;
             justify-content:center;
         }
         .server-btn{
+            flex:1;
+            min-width:220px;
+            max-width:280px;
             position:relative;
             overflow:hidden;
-            padding:14px 34px;
+            padding:16px 20px;
             background:rgba(153,153,255,0.12);
-            backdrop-filter: blur(12px) saturate(150%);
-            -webkit-backdrop-filter: blur(12px) saturate(150%);
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
             border:1px solid rgba(153,153,255,0.35);
             border-radius:12px;
             color:#e2e2ff;
             font-size:17px;
             text-decoration:none;
+            text-align:center;
             animation: btnLiquidGlow 3.2s ease-in-out infinite;
             transition:0.35s all ease;
         }
@@ -196,6 +218,22 @@
             transform: translateY(-4px) scale(1.02);
             color:#ffffff;
             border-color:rgba(153,153,255,0.6);
+        }
+
+        /* ========== 液态玻璃卡片 ========== */
+        .text-card{
+            position:relative;
+            background:rgba(153,153,255,0.08);
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            border:1px solid rgba(153,153,255,0.22);
+            padding:28px 32px;
+            border-radius:14px;
+            transition: 0.35s ease;
+        }
+        .text-card:hover{
+            border-color:rgba(153,153,255,0.4);
+            box-shadow:0 0 24px #9999ff28;
         }
 
         .qrcode-area{
@@ -239,6 +277,15 @@
     </style>
 </head>
 <body>
+<!-- 流星背景层 -->
+<div class="star-meteor">
+    <div class="meteor" style="left:10%;animation-duration:7s;animation-delay:0s;"></div>
+    <div class="meteor" style="left:30%;animation-duration:9s;animation-delay:2s;"></div>
+    <div class="meteor" style="left:50%;animation-duration:8s;animation-delay:4s;"></div>
+    <div class="meteor" style="left:70%;animation-duration:10s;animation-delay:1s;"></div>
+    <div class="meteor" style="left:90%;animation-duration:7.5s;animation-delay:3s;"></div>
+</div>
+
 <header>
     <img class="logo" src="logo.png" alt="南沐服务器Logo">
     <h1>南沐服务器</h1>
@@ -247,6 +294,12 @@
 
 <div class="container">
     <div class="intro-block">
+        <!-- 按钮放到服务器介绍【上方】横排等宽 -->
+        <div class="btn-group">
+            <a class="server-btn" target="_blank" href="http://free-c3.tudouai.cn:20466/">🗺️ 网页线路图</a>
+            <a class="server-btn" target="_blank" href="https://docs.qq.com/form/page/DYXdMckFIZFNwbXp0">📝 线路审批</a>
+        </div>
+
         <h2>📋 服务器介绍</h2>
         <div class="text-card">
             <p>南沐服务器是主打MTR模组轨道交通+现代城市建造的Minecraft Java版生存创造混合服务器。</p>
@@ -256,11 +309,6 @@
             <p>✅ 支持AXI、Litematica投影、创世神WorldEdit建造工具，高效完成大型建筑</p>
             <p>✅ 完整的城市片区，崇德区等已建成城区，高楼、高架桥梁、过江铁路大桥、雨雾夜景城市环境</p>
             <p>✅ 严格用户协议，规范建设，拒绝乱建，共同打造高质量MC轨道交通城市</p>
-        </div>
-        <!-- 两个液态玻璃按钮 -->
-        <div class="btn-group">
-            <a class="server-btn" target="_blank" href="http://free-c3.tudouai.cn:20466/">🗺️ 网页线路图</a>
-            <a class="server-btn" target="_blank" href="https://docs.qq.com/form/page/DYXdMckFIZFNwbXp0">📝 线路审批</a>
         </div>
     </div>
 
@@ -292,3 +340,4 @@
 </footer>
 </body>
 </html>
+
