@@ -21,6 +21,45 @@
             line-height:1.7;
             opacity: 0;
             animation: pageFadeIn 1s ease forwards;
+            /* 给顶部导航留出高度 */
+            padding-top:82px;
+        }
+        /* ==========顶部悬浮导航栏【新增】========== */
+        .top-header-bar{
+            position: fixed;
+            top: 0;
+            left:0;
+            width:100%;
+            height:82px;
+            z-index:999;
+            /* 液态玻璃材质，折射流星背景 */
+            background:rgba(153,153,255,0.09);
+            backdrop-filter: blur(14px) saturate(160%);
+            -webkit-backdrop-filter: blur(14px) saturate(160%);
+            border-bottom:1px solid rgba(153,153,255,0.24);
+            transition: transform 0.42s cubic‑bezier(0.2,0.8,0.2,1);
+        }
+        .top-header-bar.hide-up{
+            transform: translateY(-100%);
+        }
+        .top-nav-inner{
+            height:100%;
+            max-width:1200px;
+            margin:0 auto;
+            padding:0 20px;
+            display:flex;
+            align-items:center;
+            gap:14px;
+        }
+        .top-nav-logo{
+            height:52px;
+            width:52px;
+            border-radius:8px;
+        }
+        .top-nav-title{
+            font-size:22px;
+            color:#94bfff;
+            font-weight:bold;
         }
         /* ====== 背景渐变动画 ====== */
         @keyframes gradientShift {
@@ -285,6 +324,14 @@
     </style>
 </head>
 <body>
+<!-- =========顶部悬浮导航栏 新增========= -->
+<div class="top-header-bar">
+    <div class="top-nav-inner">
+        <img class="top-nav-logo" src="logo.png" alt="南沐服务器">
+        <span class="top-nav-title">南沐服务器</span>
+    </div>
+</div>
+
 <!-- 流星背景层 (数量增加到15颗) -->
 <div class="star-meteor">
     <div class="meteor" style="left:5%;animation-duration:7s;animation-delay:0s;"></div>
@@ -324,7 +371,7 @@
             <br>
             <p>✅ 使用MTR4.0轨道交通模组，完整支持列车、站台、越行线、接触网、快慢车交路运行</p>
             <p>✅ 完整城市规划体系，线路申报审批制度，配套《南沐市轨道交通建设与管理标准》</p>
-            <p>✅ 支持AXI、Litematica投影、创世神WorldEdit建造工具，高效完成大型建筑</p>
+            <p>✅ 支持axiom、Litematica投影、创世神WorldEdit建造工具，高效完成大型建筑</p>
             <p>✅ 完整的城市片区，崇德区等已建成城区，高楼、高架桥梁、过江铁路大桥、雨雾夜景城市环境</p>
             <p>✅ 严格用户协议，规范建设，拒绝乱建，共同打造高质量MC轨道交通城市</p>
         </div>
@@ -356,5 +403,25 @@
 <footer>
 南沐服务器 ©2026 | Minecraft MTR轨道交通城市服务器
 </footer>
+
+<!--导航滚动JS脚本 新增-->
+<script>
+const headerBar = document.querySelector('.top-header-bar');
+let scrollTimer = null;
+
+window.addEventListener('scroll',()=>{
+    const scrollY = window.scrollY;
+    //滚动立刻显示导航栏
+    headerBar.classList.remove('hide-up');
+    clearTimeout(scrollTimer);
+    //页面不是顶部，停止滚动等待3秒向上隐藏
+    if(scrollY > 20){
+        scrollTimer = setTimeout(()=>{
+            headerBar.classList.add('hide-up');
+        },3000);
+    }
+})
+</script>
 </body>
 </html>
+
