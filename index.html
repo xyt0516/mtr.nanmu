@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MTR 报站音频资源包生成器（自动转OGG）</title>
-    <!-- 引入 JSZip 和 ffmpeg.wasm -->
+    <title>MTR 报站打包器（自动转OGG）</title>
+    <!-- 使用国内访问更快的 CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/ffmpeg.min.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/ffmpeg.min.js"></script>
     <style>
         * { box-sizing: border-box; font-family: system-ui, sans-serif; }
         body { max-width: 900px; margin: 20px auto; padding: 0 20px; background: #f5f7fa; }
@@ -23,10 +23,9 @@
         .drop-zone { border: 2px dashed #aaa; border-radius: 12px; padding: 30px; text-align: center; background: #fff; margin-bottom: 20px; }
         .drop-zone.dragover { border-color: #2b6f9b; background: #eaf2fa; }
         #fileList { list-style: none; padding: 0; }
-        #fileList li { display: flex; align-items: center; gap: 12px; background: white; padding: 12px 16px; margin-bottom: 8px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-        #fileList li .filename { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        #fileList li .filemeta { font-size: 12px; color: #888; margin-left: 8px; }
-        #fileList li input { flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; min-width: 120px; }
+        #fileList li { display: flex; align-items: center; gap: 12px; background: white; padding: 12px 16px; margin-bottom: 8px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); flex-wrap: wrap; }
+        #fileList li .filename { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 120px; }
+        #fileList li input { flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; min-width: 100px; }
         #fileList li input:invalid { border-color: #b33; background: #ffe6e6; }
         #fileList li .del { background: none; border: none; color: #b33; font-size: 20px; cursor: pointer; padding: 0 6px; }
         .info { background: #e7f0fa; padding: 12px; border-radius: 6px; margin: 16px 0; font-size: 14px; }
@@ -37,6 +36,7 @@
         #progressBar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; margin: 8px 0; display: none; }
         #progressBar .bar { height: 100%; width: 0%; background: #2b6f9b; border-radius: 4px; transition: width 0.3s; }
         .status-text { font-size: 14px; color: #2b6f9b; margin: 4px 0; }
+        .ffmpeg-status { background: #fff3cd; padding: 10px; border-radius: 4px; border-left: 4px solid #ffc107; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -45,6 +45,9 @@
         ⚠️ 支持 <strong>任意音频格式</strong>（MP3、WAV、FLAC、M4A等），会自动转换为 OGG。<br>
         每个音频需指定一个<strong>英文ID</strong>（仅小写字母、数字、下划线），作为游戏内调用名称。
     </div>
+
+    <!-- 显示 FFmpeg 加载状态 -->
+    <div id="ffmpegStatus" class="ffmpeg-status">⏳ 正在检测音频转换引擎状态...</div>
 
     <div class="drop-zone" id="dropZone">
         <p>📂 拖拽音频文件到这里，或点击下方按钮添加</p>
@@ -70,9 +73,7 @@
 
     <script>
         (function() {
-            // 存储条目：{ file: File, id: string, element: HTMLLIElement, isOgg: boolean }
             let entries = [];
-
             const fileInput = document.getElementById('fileInput');
             const addBtn = document.getElementById('addBtn');
             const dropZone = document.getElementById('dropZone');
@@ -83,29 +84,44 @@
             const progressFill = document.getElementById('progressFill');
             const progressBar = document.getElementById('progressBar');
             const statusText = document.getElementById('statusText');
+            const ffmpegStatus = document.getElementById('ffmpegStatus');
 
-            // ffmpeg 实例（懒加载）
             let ffmpegInstance = null;
             let isFFmpegLoaded = false;
 
-            // 工具：生成默认ID（去后缀、转小写、非字母数字下划线变下划线）
+            // 检测 FFmpeg 是否加载成功
+            function checkFFmpegLoaded() {
+                try {
+                    if (typeof window.FFmpeg !== 'undefined' && window.FFmpeg.FFmpeg) {
+                        ffmpegStatus.innerHTML = '✅ 音频转换引擎已就绪（支持 MP3/WAV/FLAC 等转 OGG）';
+                        ffmpegStatus.style.borderLeftColor = '#28a745';
+                        ffmpegStatus.style.background = '#d4edda';
+                        return true;
+                    } else {
+                        ffmpegStatus.innerHTML = '⚠️ 音频转换引擎加载中... 如网络较慢请耐心等待，或刷新页面。如长时间未加载，可尝试使用纯 OGG 模式（仅上传 .ogg 文件）。';
+                        ffmpegStatus.style.borderLeftColor = '#ffc107';
+                        ffmpegStatus.style.background = '#fff3cd';
+                        return false;
+                    }
+                } catch (e) {
+                    ffmpegStatus.innerHTML = '❌ 转换引擎加载失败，请检查网络或刷新重试。如持续失败，建议只使用 .ogg 格式。';
+                    ffmpegStatus.style.borderLeftColor = '#dc3545';
+                    ffmpegStatus.style.background = '#f8d7da';
+                    return false;
+                }
+            }
+
+            // 首次检测
+            setTimeout(checkFFmpegLoaded, 1000);
+
             function generateDefaultId(filename) {
-                let base = filename.replace(/\.[^.]+$/, '');
-                base = base.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+                let base = filename.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
                 if (/^[0-9]/.test(base)) base = 's_' + base;
                 return base;
             }
+            function isValidId(id) { return /^[a-z0-9_]+$/.test(id); }
+            function isOggFile(file) { return file.name.toLowerCase().endsWith('.ogg') || file.type === 'audio/ogg'; }
 
-            function isValidId(id) {
-                return /^[a-z0-9_]+$/.test(id);
-            }
-
-            // 检查是否为 OGG
-            function isOggFile(file) {
-                return file.name.toLowerCase().endsWith('.ogg') || file.type === 'audio/ogg';
-            }
-
-            // 渲染列表
             function renderEntries() {
                 fileList.innerHTML = '';
                 entries.forEach((entry, index) => {
@@ -120,11 +136,8 @@
                     input.placeholder = '输入英文ID';
                     input.addEventListener('input', function() {
                         entry.id = this.value.trim();
-                        if (entry.id && !isValidId(entry.id)) {
-                            this.setCustomValidity('只允许小写字母、数字、下划线');
-                        } else {
-                            this.setCustomValidity('');
-                        }
+                        if (entry.id && !isValidId(entry.id)) this.setCustomValidity('只允许小写字母、数字、下划线');
+                        else this.setCustomValidity('');
                         checkDuplicates();
                     });
                     const delBtn = document.createElement('button');
@@ -145,14 +158,14 @@
             }
 
             function checkDuplicates() {
-                const ids = entries.map(e => e.id.trim()).filter(id => id !== '');
+                const ids = entries.map(e => e.id.trim()).filter(id => id);
                 const dupMap = {};
                 ids.forEach(id => { dupMap[id] = (dupMap[id] || 0) + 1; });
                 entries.forEach(entry => {
                     const input = entry.element.querySelector('input');
                     const id = entry.id.trim();
                     if (id && dupMap[id] > 1) {
-                        input.setCustomValidity('ID重复，请修改');
+                        input.setCustomValidity('ID重复');
                         input.style.borderColor = '#b33';
                     } else if (id && !isValidId(id)) {
                         // 已有校验
@@ -163,44 +176,29 @@
                 });
             }
 
-            function clearMessage() {
-                messageDiv.innerHTML = '';
-            }
-
+            function clearMessage() { messageDiv.innerHTML = ''; }
             function showMessage(text, type = 'error') {
                 const cls = type === 'error' ? 'error' : (type === 'success' ? 'success' : 'info');
                 messageDiv.innerHTML = `<div class="${cls}">${text}</div>`;
             }
-
             function setProgress(value, text) {
                 progressBar.style.display = 'block';
                 progressFill.style.width = value + '%';
                 statusText.textContent = text || '';
-                if (value >= 100) {
-                    setTimeout(() => { progressBar.style.display = 'none'; }, 1000);
-                }
+                if (value >= 100) setTimeout(() => { progressBar.style.display = 'none'; }, 1000);
             }
 
             function addFiles(files) {
                 let added = 0;
                 for (let f of files) {
-                    // 检查是否已存在相同文件（按文件名和大小）
                     const exists = entries.some(e => e.file.name === f.name && e.file.size === f.size);
-                    if (exists) {
-                        showMessage(`文件 "${f.name}" 已存在，跳过`);
-                        continue;
-                    }
-                    const defaultId = generateDefaultId(f.name);
-                    entries.push({ file: f, id: defaultId, element: null, isOgg: isOggFile(f) });
+                    if (exists) { showMessage(`"${f.name}" 已存在，跳过`); continue; }
+                    entries.push({ file: f, id: generateDefaultId(f.name), element: null });
                     added++;
                 }
-                if (added > 0) {
-                    renderEntries();
-                    clearMessage();
-                }
+                if (added > 0) { renderEntries(); clearMessage(); }
             }
 
-            // 加载 ffmpeg
             async function loadFFmpeg() {
                 if (isFFmpegLoaded) return ffmpegInstance;
                 try {
@@ -208,44 +206,36 @@
                     const { FFmpeg } = window.FFmpeg;
                     const ffmpeg = new FFmpeg();
                     await ffmpeg.load({
-                        coreURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+                        coreURL: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
                     });
                     ffmpegInstance = ffmpeg;
                     isFFmpegLoaded = true;
                     setProgress(100, '转换引擎加载完成');
+                    checkFFmpegLoaded();
                     return ffmpeg;
                 } catch (e) {
-                    showMessage('加载转换引擎失败，请检查网络或刷新重试。错误：' + e.message);
+                    showMessage('加载转换引擎失败，请检查网络。错误：' + e.message);
                     setProgress(0, '');
                     throw e;
                 }
             }
 
-            // 转换单个文件为 OGG
             async function convertToOgg(file, ffmpeg) {
                 const inputExt = file.name.split('.').pop() || 'bin';
                 const inputName = 'input.' + inputExt;
                 const outputName = 'output.ogg';
-                try {
-                    const data = await file.arrayBuffer();
-                    ffmpeg.writeFile(inputName, new Uint8Array(data));
-                    await ffmpeg.exec(['-i', inputName, '-c:a', 'libvorbis', '-q:a', '3', outputName]);
-                    const outputData = await ffmpeg.readFile(outputName);
-                    const blob = new Blob([outputData.buffer], { type: 'audio/ogg' });
-                    // 清理虚拟文件
-                    ffmpeg.deleteFile(inputName);
-                    ffmpeg.deleteFile(outputName);
-                    return new File([blob], file.name.replace(/\.[^.]+$/, '.ogg'), { type: 'audio/ogg' });
-                } catch (e) {
-                    throw new Error(`转换 ${file.name} 失败：${e.message}`);
-                }
+                const data = await file.arrayBuffer();
+                ffmpeg.writeFile(inputName, new Uint8Array(data));
+                await ffmpeg.exec(['-i', inputName, '-c:a', 'libvorbis', '-q:a', '3', outputName]);
+                const outputData = await ffmpeg.readFile(outputName);
+                const blob = new Blob([outputData.buffer], { type: 'audio/ogg' });
+                ffmpeg.deleteFile(inputName);
+                ffmpeg.deleteFile(outputName);
+                return new File([blob], file.name.replace(/\.[^.]+$/, '.ogg'), { type: 'audio/ogg' });
             }
 
-            // 打包主逻辑
             packBtn.addEventListener('click', async function() {
-                // 先校验所有条目
-                let invalid = false;
-                let emptyId = false;
+                let invalid = false, emptyId = false;
                 const idSet = new Set();
                 for (let entry of entries) {
                     const id = entry.id.trim();
@@ -254,104 +244,62 @@
                     if (idSet.has(id)) { invalid = true; break; }
                     idSet.add(id);
                 }
-                if (entries.length === 0) {
-                    showMessage('请先添加音频文件');
-                    return;
-                }
-                if (emptyId) {
-                    showMessage('存在空的 ID，请填写完整');
-                    return;
-                }
-                if (invalid) {
-                    showMessage('ID 格式无效或存在重复，请检查红色提示');
-                    return;
-                }
+                if (entries.length === 0) { showMessage('请先添加音频文件'); return; }
+                if (emptyId) { showMessage('存在空的 ID，请填写完整'); return; }
+                if (invalid) { showMessage('ID 格式无效或存在重复，请检查红色提示'); return; }
 
-                // 检查是否有非 OGG 文件需要转换
                 const needConvert = entries.filter(e => !isOggFile(e.file));
                 if (needConvert.length > 0) {
-                    const confirmMsg = `有 ${needConvert.length} 个文件不是 OGG 格式，将自动转换为 OGG（可能需要较长时间）。是否继续？`;
-                    if (!confirm(confirmMsg)) return;
+                    const ready = checkFFmpegLoaded();
+                    if (!ready) {
+                        showMessage('⚠️ 转换引擎未就绪，请刷新页面等待加载完成，或仅使用 .ogg 文件。');
+                        return;
+                    }
+                    if (!confirm(`有 ${needConvert.length} 个文件需要转换，确定继续吗？`)) return;
                 }
 
-                // 禁用按钮，防止重复点击
                 packBtn.disabled = true;
                 packBtn.textContent = '处理中...';
 
                 try {
                     let ffmpeg = null;
-                    // 如果有需要转换的文件，加载 ffmpeg
                     if (needConvert.length > 0) {
                         ffmpeg = await loadFFmpeg();
                         setProgress(0, '准备转换...');
                     }
 
-                    // 逐一转换非 OGG 文件（顺序执行避免内存溢出）
                     const total = needConvert.length;
                     let converted = 0;
                     for (let entry of entries) {
                         if (!isOggFile(entry.file)) {
                             const progress = Math.round((converted / total) * 100);
-                            setProgress(progress, `正在转换 ${entry.file.name} (${converted+1}/${total})`);
-                            try {
-                                const newFile = await convertToOgg(entry.file, ffmpeg);
-                                entry.file = newFile; // 替换为 OGG 文件
-                                entry.isOgg = true;
-                            } catch (e) {
-                                showMessage(`转换失败：${e.message}`);
-                                packBtn.disabled = false;
-                                packBtn.textContent = '📦 一键打包并下载';
-                                setProgress(0, '');
-                                return;
-                            }
+                            setProgress(progress, `转换 ${entry.file.name} (${converted+1}/${total})`);
+                            const newFile = await convertToOgg(entry.file, ffmpeg);
+                            entry.file = newFile;
                             converted++;
-                            // 更新列表显示
-                            const index = entries.indexOf(entry);
-                            // 重新渲染整个列表，或更新单项，简单起见重新渲染
                             renderEntries();
                         }
                     }
-                    setProgress(100, '所有文件转换完成');
+                    setProgress(100, '转换完成');
 
-                    // 开始打包
-                    setProgress(0, '正在打包资源包...');
+                    setProgress(0, '正在打包...');
                     const zip = new JSZip();
                     const soundsFolder = zip.folder('assets/mtr/sounds');
                     const soundMap = {};
                     for (let entry of entries) {
                         const id = entry.id.trim();
-                        const ext = entry.file.name.split('.').pop(); // 应该是 ogg
-                        const newName = id + '.' + ext;
-                        const arrayBuffer = await entry.file.arrayBuffer();
-                        soundsFolder.file(newName, arrayBuffer);
-                        soundMap[id] = {
-                            "sounds": [
-                                {
-                                    "name": "mtr:" + id,
-                                    "stream": true
-                                }
-                            ]
-                        };
+                        const data = await entry.file.arrayBuffer();
+                        soundsFolder.file(id + '.ogg', data);
+                        soundMap[id] = { "sounds": [{ "name": "mtr:" + id, "stream": true }] };
                     }
-                    const jsonContent = JSON.stringify(soundMap, null, 2);
-                    zip.file('assets/mtr/sounds.json', jsonContent);
-
-                    const mcmeta = {
-                        "pack": {
-                            "pack_format": 15,
-                            "description": "MTR 报站音频包 (由打包器生成)"
-                        }
-                    };
-                    zip.file('pack.mcmeta', JSON.stringify(mcmeta, null, 2));
+                    zip.file('assets/mtr/sounds.json', JSON.stringify(soundMap, null, 2));
+                    zip.file('pack.mcmeta', JSON.stringify({ "pack": { "pack_format": 15, "description": "MTR报站包" } }, null, 2));
 
                     const blob = await zip.generateAsync({ type: 'blob' });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = 'mtr_pack.zip';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(link.href);
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'mtr_pack.zip';
+                    a.click();
                     showMessage('✅ 打包成功，已开始下载！', 'success');
                     setProgress(100, '完成');
                 } catch (e) {
@@ -363,41 +311,16 @@
             });
 
             // 事件绑定
-            addBtn.addEventListener('click', function() {
-                fileInput.click();
-            });
-            fileInput.addEventListener('change', function() {
-                if (this.files.length) {
-                    addFiles(this.files);
-                    this.value = '';
-                }
-            });
-
-            dropZone.addEventListener('dragover', function(e) {
+            addBtn.onclick = () => fileInput.click();
+            fileInput.onchange = function() { if (this.files.length) { addFiles(this.files); this.value = ''; } };
+            dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', e => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+            dropZone.addEventListener('drop', e => {
                 e.preventDefault();
-                this.classList.add('dragover');
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
             });
-            dropZone.addEventListener('dragleave', function(e) {
-                e.preventDefault();
-                this.classList.remove('dragover');
-            });
-            dropZone.addEventListener('drop', function(e) {
-                e.preventDefault();
-                this.classList.remove('dragover');
-                if (e.dataTransfer.files.length) {
-                    addFiles(e.dataTransfer.files);
-                }
-            });
-
-            clearBtn.addEventListener('click', function() {
-                if (entries.length === 0) return;
-                if (confirm('确定清空所有音频吗？')) {
-                    entries = [];
-                    renderEntries();
-                    clearMessage();
-                    setProgress(0, '');
-                }
-            });
+            clearBtn.onclick = function() { if (entries.length && confirm('清空所有？')) { entries = []; renderEntries(); clearMessage(); } };
 
             renderEntries();
         })();
