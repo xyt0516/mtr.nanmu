@@ -4,285 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>starail 星尘铁路mtr音频打包工具</title>
-    <!-- 国内高速CDN -->
+    <!-- 仅保留 JSZip，使用国内CDN加速 -->
     <script src="https://cdn.bootcdn.net/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vorbis-encoder-js@1.0.2/dist/encoder.min.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            font-family: system-ui, sans-serif;
-        }
-
-        body {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 80px 20px 20px;
-            background: #f5f7fa;
-        }
-
-        /* ========== 顶部液态玻璃横幅 ========== */
-        #liquidBanner {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
-            transform: translateY(-100%);
-            transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
-            pointer-events: none;
-        }
-
-        #liquidBanner.show {
-            transform: translateY(0);
-            pointer-events: auto;
-        }
-
-        #liquidBanner .banner-text {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #1a3c5e;
-            letter-spacing: 0.5px;
-            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
-        }
-
-        h1 {
-            color: #1a3c5e;
-            border-bottom: 2px solid #2b6f9b;
-            padding-bottom: 8px;
-            margin-top: 0;
-            font-size: 2rem;
-            text-align: center;
-        }
-
-        .toolbar {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin: 20px 0;
-            align-items: center;
-        }
-
-        .btn {
-            background: #2b6f9b;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.2s;
-        }
-        .btn:hover {
-            background: #1a4f73;
-        }
-        .btn-danger {
-            background: #b33;
-        }
-        .btn-danger:hover {
-            background: #922;
-        }
-        .btn-success {
-            background: #2a7a4a;
-        }
-        .btn-success:hover {
-            background: #1d5c36;
-        }
-
-        .drop-zone {
-            border: 2px dashed #aaa;
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            background: #fff;
-            margin-bottom: 20px;
-            transition: border-color 0.2s, background 0.2s;
-        }
-        .drop-zone.dragover {
-            border-color: #2b6f9b;
-            background: #eaf2fa;
-        }
-
-        #fileList {
-            list-style: none;
-            padding: 0;
-        }
-        #fileList li {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: white;
-            padding: 12px 16px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            flex-wrap: wrap;
-        }
-        #fileList li .filename {
-            flex: 1;
-            font-weight: 500;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            min-width: 120px;
-        }
-        #fileList li input {
-            flex: 1;
-            padding: 6px 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-            min-width: 100px;
-        }
-        #fileList li input:invalid {
-            border-color: #b33;
-            background: #ffe6e6;
-        }
-        #fileList li .del {
-            background: none;
-            border: none;
-            color: #b33;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 0 6px;
-        }
-
-        .info {
-            background: #e7f0fa;
-            padding: 12px;
-            border-radius: 6px;
-            margin: 16px 0;
-            font-size: 14px;
-        }
-        .error {
-            color: #b33;
-            background: #fde8e8;
-            padding: 8px 12px;
-            border-radius: 4px;
-            margin: 8px 0;
-        }
-        .success {
-            color: #1d5c36;
-            background: #dff0d8;
-            padding: 8px 12px;
-            border-radius: 4px;
-            margin: 8px 0;
-        }
-
-        .footer {
-            margin-top: 30px;
-            font-size: 14px;
-            color: #666;
-            text-align: center;
-        }
-        .footer .author {
-            margin-top: 6px;
-            font-weight: 500;
-            color: #2b6f9b;
-        }
-
-        #progressBar {
-            width: 100%;
-            height: 8px;
-            background: #e0e0e0;
-            border-radius: 4px;
-            margin: 8px 0;
-            display: none;
-        }
-        #progressBar .bar {
-            height: 100%;
-            width: 0%;
-            background: #2b6f9b;
-            border-radius: 4px;
-            transition: width 0.3s;
-        }
-        .status-text {
-            font-size: 14px;
-            color: #2b6f9b;
-            margin: 4px 0;
-        }
-
-        .pack-name-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-left: auto;
-            background: white;
-            padding: 6px 12px;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
-        .pack-name-group label {
-            font-weight: 500;
-            color: #1a3c5e;
-            white-space: nowrap;
-        }
-        .pack-name-group input {
-            padding: 8px 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-            min-width: 180px;
-        }
-
-        .encoder-status {
-            background: #d4edda;
-            padding: 10px;
-            border-radius: 4px;
-            border-left: 4px solid #28a745;
-            margin: 10px 0;
-        }
-
-        .quality-setting {
-            background:#fff;
-            padding:12px;
-            border-radius:8px;
-            margin-bottom:16px;
-            box-shadow:0 1px 3px rgba(0,0,0,0.08);
-        }
-        .quality-setting label{
-            display:block;
-            margin-bottom:6px;
-        }
-        input[type="range"]{
-            width:100%;
-        }
+        * { box-sizing: border-box; font-family: system-ui, sans-serif; }
+        body { max-width: 900px; margin: 0 auto; padding: 20px; background: #f5f7fa; }
+        h1 { color: #1a3c5e; border-bottom: 2px solid #2b6f9b; padding-bottom: 8px; text-align: center; }
+        .toolbar { display: flex; gap: 12px; flex-wrap: wrap; margin: 20px 0; align-items: center; }
+        .btn { background: #2b6f9b; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 16px; }
+        .btn:hover { background: #1a4f73; }
+        .btn-danger { background: #b33; }
+        .btn-danger:hover { background: #922; }
+        .btn-success { background: #2a7a4a; }
+        .btn-success:hover { background: #1d5c36; }
+        .drop-zone { border: 2px dashed #aaa; border-radius: 12px; padding: 30px; text-align: center; background: #fff; margin-bottom: 20px; }
+        .drop-zone.dragover { border-color: #2b6f9b; background: #eaf2fa; }
+        #fileList { list-style: none; padding: 0; }
+        #fileList li { display: flex; align-items: center; gap: 12px; background: white; padding: 12px 16px; margin-bottom: 8px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); flex-wrap: wrap; }
+        #fileList li .filename { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 120px; }
+        #fileList li input { flex: 1; padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; min-width: 100px; }
+        #fileList li .del { background: none; border: none; color: #b33; font-size: 20px; cursor: pointer; padding: 0 6px; }
+        .info { background: #e7f0fa; padding: 12px; border-radius: 6px; margin: 16px 0; font-size: 14px; }
+        .error { color: #b33; background: #fde8e8; padding: 8px 12px; border-radius: 4px; margin: 8px 0; }
+        .success { color: #1d5c36; background: #dff0d8; padding: 8px 12px; border-radius: 4px; margin: 8px 0; }
+        .footer { margin-top: 30px; font-size: 14px; color: #666; text-align: center; }
+        .pack-name-group { display: flex; align-items: center; gap: 8px; margin-left: auto; background: white; padding: 6px 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .pack-name-group label { font-weight: 500; color: #1a3c5e; }
+        .pack-name-group input { padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; min-width: 180px; }
     </style>
 </head>
 <body>
-    <!-- 顶部液态玻璃横幅 -->
-    <div id="liquidBanner">
-        <span class="banner-text">starail 星尘铁路mtr音频打包工具</span>
-    </div>
-
     <h1>🚇 starail 星尘铁路mtr音频打包工具</h1>
 
     <div class="info">
-        ⚠️ 支持 MP3 / MP4(提取音频) / WAV / M4A / FLAC，自动转成MTR需要的OGG‑Vorbis<br>
-        每个音频需指定一个<strong>英文ID</strong>（仅小写字母、数字、下划线），作为游戏内调用名称。<br>
-        💡 本工具使用轻量Vorbis编码器，不再使用FFmpeg，加载速度大幅提升。<br>
-        ⚠️【线上使用提示】打开网页后请<strong>先点击页面任意位置</strong>，再添加文件！推荐Chrome/Edge浏览器。
+        ⚠️ 仅支持 <strong>.ogg</strong> 文件（MTR 要求的格式）。<br>
+        请确保你的音频已经转换为 OGG Vorbis 格式后再添加。<br>
+        每个音频需指定一个<strong>英文ID</strong>（仅小写字母、数字、下划线）。
     </div>
-
-    <div class="quality-setting">
-        <label>🎚️ 转换质量调节（0=体积最小，10=音质最好）<span id="qualityValue">5</span></label>
-        <input type="range" id="qualitySlider" min="0" max="10" value="5">
-    </div>
-
-    <div id="encoderStatus" class="encoder-status">✅ 轻量OGG编码器已就绪</div>
 
     <div class="drop-zone" id="dropZone">
-        <p>📂 拖拽音频/MP4视频文件到这里，或点击下方按钮添加</p>
+        <p>📂 拖拽 .ogg 文件到这里，或点击下方按钮添加</p>
         <button class="btn" id="addBtn">➕ 添加文件</button>
-        <input type="file" id="fileInput" accept="audio/*,video/mp4" multiple style="display:none">
+        <input type="file" id="fileInput" accept=".ogg,audio/ogg" multiple style="display:none">
     </div>
 
     <ul id="fileList"></ul>
@@ -296,8 +59,6 @@
         </div>
     </div>
 
-    <div id="progressBar"><div class="bar" id="progressFill"></div></div>
-    <div id="statusText" class="status-text"></div>
     <div id="message"></div>
 
     <div class="footer">
@@ -307,48 +68,6 @@
 
     <script>
         (function() {
-            // ================== 顶部液态玻璃横幅控制 ==================
-            const banner = document.getElementById('liquidBanner');
-            let lastScrollY = window.scrollY;
-            let hideTimer = null;
-
-            function showBanner() {
-                banner.classList.add('show');
-                if (hideTimer) clearTimeout(hideTimer);
-                hideTimer = setTimeout(() => {
-                    banner.classList.remove('show');
-                }, 3000);
-            }
-
-            function hideBanner() {
-                if (hideTimer) clearTimeout(hideTimer);
-                banner.classList.remove('show');
-            }
-
-            window.addEventListener('scroll', () => {
-                const currentScrollY = window.scrollY;
-                const scrollDelta = currentScrollY - lastScrollY;
-
-                if (scrollDelta > 0 && currentScrollY > 100) {
-                    showBanner();
-                } else if (scrollDelta < -1) {
-                    hideBanner();
-                }
-                lastScrollY = currentScrollY;
-            });
-
-            if (window.scrollY > 100) {
-                showBanner();
-            }
-
-            // ================== 质量滑块 ==================
-            const qualitySlider = document.getElementById('qualitySlider');
-            const qualityValue = document.getElementById('qualityValue');
-            qualitySlider.addEventListener('input', ()=>{
-                qualityValue.textContent = qualitySlider.value;
-            });
-
-            // ================== 文件处理逻辑 ==================
             let entries = [];
             const fileInput = document.getElementById('fileInput');
             const addBtn = document.getElementById('addBtn');
@@ -357,19 +76,7 @@
             const packBtn = document.getElementById('packBtn');
             const clearBtn = document.getElementById('clearBtn');
             const messageDiv = document.getElementById('message');
-            const progressFill = document.getElementById('progressFill');
-            const progressBar = document.getElementById('progressBar');
-            const statusText = document.getElementById('statusText');
             const packNameInput = document.getElementById('packNameInput');
-
-            let audioContext = null;
-
-            // 点击页面初始化AudioContext（解决GitHub Pages线上限制）
-            document.addEventListener('click', ()=>{
-                if(!audioContext){
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                }
-            }, {once:true});
 
             function generateDefaultId(filename) {
                 let base = filename.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
@@ -381,41 +88,13 @@
                 return /^[a-z0-9_]+$/.test(id);
             }
 
-            function isOggFile(file) {
-                return file.name.toLowerCase().endsWith('.ogg') || file.type === 'audio/ogg';
-            }
-
-            // 解码任意音频(mp3/m4a/flac/mp4)得到PCM，然后转OGG，使用滑块质量
-            async function convertAnyToOgg(file) {
-                if(!audioContext) throw new Error("请先点击页面任意位置激活音频");
-                const arrayBuf = await file.arrayBuffer();
-                const audioBuf = await audioContext.decodeAudioData(arrayBuf);
-
-                const channelData = audioBuf.getChannelData(0);
-                const sampleRate = audioBuf.sampleRate;
-                // 滑块0‑10映射vorbis质量0‑1
-                const quality = Number(qualitySlider.value)/10;
-
-                const encoder = new VorbisEncoder({
-                    sampleRate: sampleRate,
-                    channels: 1,
-                    quality: quality
-                });
-                encoder.encode(channelData);
-                const oggBlob = encoder.finish();
-
-                const newName = file.name.replace(/\.[^.]+$/, '.ogg');
-                return new File([oggBlob], newName, { type: "audio/ogg" });
-            }
-
             function renderEntries() {
                 fileList.innerHTML = '';
                 entries.forEach((entry, index) => {
                     const li = document.createElement('li');
                     const span = document.createElement('span');
                     span.className = 'filename';
-                    const oggTag = isOggFile(entry.file) ? '✅ OGG' : '🔄 待转';
-                    span.textContent = entry.file.name + ` (${(entry.file.size/1024).toFixed(1)} KB) [${oggTag}]`;
+                    span.textContent = entry.file.name + ` (${(entry.file.size/1024).toFixed(1)} KB)`;
                     const input = document.createElement('input');
                     input.type = 'text';
                     input.value = entry.id;
@@ -469,19 +148,11 @@
                 messageDiv.innerHTML = `<div class="${cls}">${text}</div>`;
             }
 
-            function setProgress(value, text) {
-                progressBar.style.display = 'block';
-                progressFill.style.width = value + '%';
-                statusText.textContent = text || '';
-                if (value >= 100) setTimeout(() => { progressBar.style.display = 'none'; }, 1000);
-            }
-
             function addFiles(files) {
                 let added = 0;
                 for (let f of files) {
-                    const isMedia = f.type.startsWith('audio/') || f.type === 'video/mp4';
-                    if (!isMedia) {
-                        showMessage(`"${f.name}" 不是支持的音频/MP4文件，已跳过`);
+                    if (!f.name.toLowerCase().endsWith('.ogg')) {
+                        showMessage(`"${f.name}" 不是 .ogg 文件，已跳过`);
                         continue;
                     }
                     const exists = entries.some(e => e.file.name === f.name && e.file.size === f.size);
@@ -506,7 +177,14 @@
             addBtn.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', () => addFiles(fileInput.files));
 
-            // 打包主逻辑
+            // 清空
+            clearBtn.addEventListener('click', () => {
+                entries = [];
+                renderEntries();
+                clearMessage();
+            });
+
+            // 打包
             packBtn.addEventListener('click', async function() {
                 let invalid = false, emptyId = false;
                 const idSet = new Set();
@@ -517,34 +195,11 @@
                     if (idSet.has(id)) { invalid = true; break; }
                     idSet.add(id);
                 }
-                if (entries.length === 0) { showMessage('请先添加文件'); return; }
+                if (entries.length === 0) { showMessage('请先添加 .ogg 文件'); return; }
                 if (emptyId) { showMessage('存在空的 ID，请填写完整'); return; }
                 if (invalid) { showMessage('ID 格式无效或存在重复，请检查红色提示'); return; }
 
-                const needConvert = entries.filter(e => !isOggFile(e.file));
-                if (needConvert.length > 0) {
-                    if (!confirm(`有 ${needConvert.length} 个文件需要转OGG，确定继续吗？`)) return;
-                }
-
-                packBtn.disabled = true;
-                packBtn.textContent = '处理中...';
-
                 try {
-                    const total = needConvert.length;
-                    let converted = 0;
-                    for (let entry of entries) {
-                        if (!isOggFile(entry.file)) {
-                            const progress = Math.round((converted / total) * 100);
-                            setProgress(progress, `转换 ${entry.file.name} (${converted+1}/${total})`);
-                            const newFile = await convertAnyToOgg(entry.file);
-                            entry.file = newFile;
-                            converted++;
-                            renderEntries();
-                        }
-                    }
-                    setProgress(100, '转换完成');
-
-                    setProgress(0, '正在打包资源包...');
                     const zip = new JSZip();
                     const soundsFolder = zip.folder('assets/mtr/sounds');
                     const soundMap = {};
@@ -555,10 +210,28 @@
                         soundMap[id] = `mtr:sounds/${id}`;
                     }
 
-                    // 写入 sounds.json
                     const jsonStr = JSON.stringify(soundMap, null, 2);
                     zip.file("assets/mtr/sounds.json", jsonStr);
 
                     const packName = packNameInput.value.trim() || "mtr_pack";
                     const zipBlob = await zip.generateAsync({ type: "blob" });
-                
+
+                    // 下载
+                    const url = URL.createObjectURL(zipBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = packName + ".zip";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    showMessage('✅ 打包成功！已开始下载。', 'success');
+                } catch (err) {
+                    console.error(err);
+                    showMessage('打包失败：' + err.message);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
