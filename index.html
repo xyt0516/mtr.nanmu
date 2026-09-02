@@ -16,12 +16,7 @@
             --card-bg: rgba(255,255,255,0.10);
             --shadow: 0 8px 32px rgba(0,0,0,0.25);
         }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "HarmonyOS Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "HarmonyOS Sans", system-ui, sans-serif; }
 
         body {
             min-height: 100vh;
@@ -31,83 +26,40 @@
             background: #0b0b18;
         }
 
-        #bg-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: -2;
-        }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; }
 
         .bg-gradient-anim {
-            position: fixed;
-            top:0;left:0;right:0;bottom:0;
-            z-index: -1;
+            position: fixed; top:0; left:0; right:0; bottom:0; z-index:-1;
             background:
                 radial-gradient(ellipse at 10% 20%, rgba(153,153,255,0.18) 0%, transparent 45%),
                 radial-gradient(ellipse at 90% 80%, rgba(119,119,221,0.14) 0%, transparent 45%);
             animation: gradientMove 25s ease-in-out infinite alternate;
             pointer-events:none;
         }
-        @keyframes gradientMove {
-            0%{ transform: translate(-3%, -3%); }
-            100%{ transform: translate(3%, 3%); }
-        }
+        @keyframes gradientMove { 0%{ transform: translate(-3%, -3%); } 100%{ transform: translate(3%, 3%); } }
 
         header {
-            position: sticky;
-            top:0;
-            z-index:999;
+            position: sticky; top:0; z-index:999;
             backdrop-filter: blur(24px) saturate(160%);
             -webkit-backdrop-filter: blur(24px) saturate(160%);
             background: rgba(11,11,24,0.62);
             border-bottom: 1px solid var(--glass-border);
-            box-shadow: 0 2px 20px rgba(153,153,255,0.08);
             padding: 14px 24px;
-            transition: 0.3s;
         }
-        .header-wrap {
-            max-width:1100px;
-            margin:0 auto;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-        }
-        .logo-title {
-            display:flex;
-            align-items:center;
-            gap:12px;
-        }
+        .header-wrap { max-width:1100px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; }
+        .logo-title { display:flex; align-items:center; gap:12px; }
         .logo-icon {
-            width:36px;height:36px;
-            border-radius:8px;
+            width:36px; height:36px; border-radius:8px;
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            display:grid;
-            place-items:center;
-            font-weight:bold;
+            display:grid; place-items:center; font-weight:bold;
             box-shadow: 0 0 14px rgba(153,153,255,0.45);
             animation: logoPulse 4s ease-in-out infinite;
         }
-        @keyframes logoPulse{
-            0%,100%{box-shadow:0 0 14px rgba(153,153,255,0.45);}
-            50%{box-shadow:0 0 24px rgba(153,153,255,0.7);}
-        }
-        .logo-text h1{
-            font-size:1.35rem;
-            font-weight:600;
-            color:#fff;
-        }
-        .logo-text p{
-            font-size:0.8rem;
-            color:var(--text-sub);
-        }
+        @keyframes logoPulse { 0%,100%{box-shadow:0 0 14px rgba(153,153,255,0.45);} 50%{box-shadow:0 0 24px rgba(153,153,255,0.7);} }
+        .logo-text h1 { font-size:1.35rem; font-weight:600; }
+        .logo-text p { font-size:0.8rem; color:var(--text-sub); }
 
-        main {
-            max-width:1100px;
-            margin:32px auto 60px;
-            padding:0 20px;
-        }
+        main { max-width:1100px; margin:32px auto 60px; padding:0 20px; }
 
         .glass-card {
             backdrop-filter: blur(20px) saturate(150%);
@@ -120,207 +72,64 @@
             box-shadow: var(--shadow);
             transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
-        .glass-card:hover{
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(153,153,255,0.12);
-        }
+        .glass-card:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(153,153,255,0.12); }
 
-        .section-title{
-            font-size:1.15rem;
-            font-weight:550;
-            margin-bottom:16px;
-            display:flex;
-            align-items:center;
-            gap:10px;
+        .section-title {
+            font-size:1.15rem; font-weight:550; margin-bottom:16px;
+            display:flex; align-items:center; gap:10px;
         }
-        .section-title::before{
-            content:"";
-            width:4px;height:18px;
-            border-radius:2px;
-            background:linear-gradient(180deg, var(--primary), var(--primary-dark));
-        }
+        .section-title::before { content:""; width:4px; height:18px; border-radius:2px; background:linear-gradient(180deg, var(--primary), var(--primary-dark)); }
 
-        .btn{
-            padding:10px 20px;
-            border-radius:10px;
-            border:none;
-            font-size:15px;
-            font-weight:500;
-            cursor:pointer;
-            transition: all 0.24s ease;
-            backdrop-filter: blur(12px);
+        .btn {
+            padding:10px 20px; border-radius:10px; border:none; font-size:15px; font-weight:500;
+            cursor:pointer; transition: all 0.24s ease;
         }
-        .btn-primary{
+        .btn-primary {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color:#000;
-            box-shadow: 0 4px 16px rgba(153,153,255,0.35);
+            color:#000; box-shadow: 0 4px 16px rgba(153,153,255,0.35);
         }
-        .btn-primary:hover:not(:disabled){
-            filter: brightness(1.12);
-            transform: translateY(-1px);
-            box-shadow:0 6px 22px rgba(153,153,255,0.48);
-        }
-        .btn-primary:disabled{
-            opacity:0.45;
-            cursor:not-allowed;
-            transform:none;
-            box-shadow:none;
-        }
-        .btn-ghost{
-            background: rgba(255,255,255,0.08);
-            color:#fff;
-            border:1px solid rgba(255,255,255,0.18);
-        }
-        .btn-ghost:hover{
-            background:rgba(255,255,255,0.14);
-        }
-        .btn-danger{
-            background: linear-gradient(135deg,#ff6b6b,#c93838);
-            color:white;
-            box-shadow:0 4px 16px rgba(255,80,80,0.28);
+        .btn-primary:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
+        .btn-primary:disabled { opacity:0.45; cursor:not-allowed; }
+        .btn-ghost { background: rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.18); }
+        .btn-ghost:hover { background:rgba(255,255,255,0.14); }
+
+        .toolbar { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:16px; }
+        .pack-name-wrap { margin-left:auto; display:flex; align-items:center; gap:10px; }
+        .pack-name-wrap label { font-size:14px; color:var(--text-sub); }
+        .pack-name-wrap input {
+            background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
+            color:white; border-radius:8px; padding:9px 12px; min-width:190px; outline:none;
         }
 
-        .toolbar{
-            display:flex;
-            flex-wrap:wrap;
-            gap:12px;
-            align-items:center;
-            margin-bottom:16px;
+        .drop-zone {
+            border:2px dashed rgba(153,153,255,0.35); border-radius:14px;
+            padding:36px 20px; text-align:center; transition:0.28s; cursor:pointer;
         }
-        .pack-name-wrap{
-            margin-left:auto;
-            display:flex;
-            align-items:center;
-            gap:10px;
-        }
-        .pack-name-wrap label{
-            font-size:14px;
-            color:var(--text-sub);
-        }
-        .pack-name-wrap input{
-            background:rgba(255,255,255,0.08);
-            border:1px solid rgba(255,255,255,0.18);
-            color:white;
-            border-radius:8px;
-            padding:9px 12px;
-            min-width:190px;
-            outline:none;
-            transition:0.2s;
-        }
-        .pack-name-wrap input:focus{
-            border-color:var(--primary);
-            box-shadow:0 0 0 2px rgba(153,153,255,0.25);
-        }
+        .drop-zone.dragover { border-color:var(--primary); background:rgba(153,153,255,0.09); }
+        .drop-zone p { color:var(--text-sub); margin-bottom:16px; }
 
-        .drop-zone{
-            border:2px dashed rgba(153,153,255,0.35);
-            border-radius:14px;
-            padding:36px 20px;
-            text-align:center;
-            transition:0.28s;
-            cursor:pointer;
-        }
-        .drop-zone.dragover{
-            border-color:var(--primary);
-            background:rgba(153,153,255,0.09);
-        }
-        .drop-zone p{
-            color:var(--text-sub);
-            margin-bottom:16px;
-        }
-
-        #fileList{
-            list-style:none;
-            display:flex;
-            flex-direction:column;
-            gap:10px;
-        }
-        .file-item{
-            display:flex;
-            flex-wrap:wrap;
-            align-items:center;
-            gap:12px;
-            background:rgba(255,255,255,0.06);
-            border-radius:12px;
-            padding:14px 16px;
+        #fileList { list-style:none; display:flex; flex-direction:column; gap:10px; }
+        .file-item {
+            display:flex; flex-wrap:wrap; align-items:center; gap:12px;
+            background:rgba(255,255,255,0.06); border-radius:12px; padding:14px 16px;
             border:1px solid rgba(255,255,255,0.10);
-            transition:0.22s;
         }
-        .file-item:hover{
-            background:rgba(255,255,255,0.09);
+        .file-name { flex:1; min-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .file-id-input {
+            background:rgba(0,0,0,0.24); border:1px solid rgba(255,255,255,0.16);
+            color:#fff; border-radius:8px; padding:8px 11px; min-width:160px; outline:none;
         }
-        .file-name{
-            flex:1;
-            min-width:140px;
-            overflow:hidden;
-            text-overflow:ellipsis;
-            white-space:nowrap;
-        }
-        .file-id-input{
-            background:rgba(0,0,0,0.24);
-            border:1px solid rgba(255,255,255,0.16);
-            color:#fff;
-            border-radius:8px;
-            padding:8px 11px;
-            min-width:160px;
-            outline:none;
-        }
-        .file-id-input:focus{
-            border-color:var(--primary);
-        }
-        .file-id-input:invalid{
-            border-color:#ff7777;
-        }
-        .file-del{
-            background:none;
-            border:none;
-            color:#ff8888;
-            font-size:22px;
-            cursor:pointer;
-            padding:0 8px;
-            line-height:1;
-        }
+        .file-id-input:focus { border-color:var(--primary); }
+        .file-del { background:none; border:none; color:#ff8888; font-size:22px; cursor:pointer; padding:0 8px; }
+        .file-audio { flex-basis:100%; margin-top:8px; width:100%; outline:none; border-radius:8px; background:rgba(0,0,0,0.3); }
 
-        /* 音频播放器样式 */
-        .file-audio {
-            flex-basis: 100%;
-            margin-top: 8px;
-            width: 100%;
-            outline: none;
-            border-radius: 8px;
-            background: rgba(0,0,0,0.3);
-        }
-        audio::-webkit-media-controls-panel {
-            background-color: rgba(255,255,255,0.1);
-        }
+        .msg-area > div { padding:12px 16px; border-radius:10px; margin:10px 0; }
+        .msg-info { background:rgba(153,153,255,0.14); border:1px solid rgba(153,153,255,0.25); }
+        .msg-error { background:rgba(255,80,80,0.16); border:1px solid rgba(255,90,90,0.28); }
+        .msg-success { background:rgba(90,220,140,0.15); border:1px solid rgba(90,220,140,0.28); }
 
-        .msg-area > div{
-            padding:12px 16px;
-            border-radius:10px;
-            margin:10px 0;
-        }
-        .msg-info{
-            background:rgba(153,153,255,0.14);
-            border:1px solid rgba(153,153,255,0.25);
-        }
-        .msg-error{
-            background:rgba(255,80,80,0.16);
-            border:1px solid rgba(255,90,90,0.28);
-        }
-        .msg-success{
-            background:rgba(90,220,140,0.15);
-            border:1px solid rgba(90,220,140,0.28);
-        }
-
-        footer{
-            text-align:center;
-            color:#8888aa;
-            font-size:13px;
-            padding:20px;
-        }
-        #fileInput{
-            display:none;
-        }
+        footer { text-align:center; color:#8888aa; font-size:13px; padding:20px; }
+        #fileInput { display:none; }
     </style>
 </head>
 <body>
@@ -336,7 +145,7 @@
                     <p>MTR 音频资源包打包工具</p>
                 </div>
             </div>
-            <div style="color:var(--text-sub);font-size:13px" id="zip-status">⏳ 正在加载JSZip…</div>
+            <div style="color:var(--text-sub);font-size:13px">✅ 本地打包引擎已就绪</div>
         </div>
     </header>
 
@@ -354,7 +163,7 @@
         <div class="glass-card">
             <h2 class="section-title">音频列表</h2>
             <div class="toolbar">
-                <button class="btn btn-primary" id="packBtn" disabled>📦 生成资源包ZIP</button>
+                <button class="btn btn-primary" id="packBtn">📦 生成资源包ZIP</button>
                 <button class="btn btn-ghost" id="clearBtn">🗑️ 清空列表</button>
                 <div class="pack-name-wrap">
                     <label>资源包名：</label>
@@ -379,118 +188,157 @@
     </main>
 
     <footer>
-        Starail MTR Sound Pack Tool | xytwuming 💫 | MTR报站资源包制作器 | 群1062448641
+        Starail MTR Sound Pack Tool | xytwuming 💫 | 华为液态玻璃风格UI
     </footer>
 
     <script>
-        // ========== 背景动画 ==========
+        // ========== 背景动画（保持不变） ==========
         const canvas = document.getElementById("bg-canvas");
         const ctx = canvas.getContext("2d");
         let w,h,stars=[];
-        function resizeCanvas(){
-            w=canvas.width=innerWidth;
-            h=canvas.height=innerHeight;
-        }
+        function resizeCanvas(){ w=canvas.width=innerWidth; h=canvas.height=innerHeight; }
         class Star{
             constructor(){
-                this.x=Math.random()*w;
-                this.y=Math.random()*h;
-                this.r=Math.random()*1.3+0.25;
-                this.speed=Math.random()*0.22+0.03;
-                this.op=Math.random()*0.65+0.12;
-                this.twinkleSpd=Math.random()*0.008;
+                this.x=Math.random()*w; this.y=Math.random()*h;
+                this.r=Math.random()*1.3+0.25; this.speed=Math.random()*0.22+0.03;
+                this.op=Math.random()*0.65+0.12; this.twinkleSpd=Math.random()*0.008;
                 this.twinkle=Math.random()*Math.PI*2;
             }
             update(){
                 this.twinkle += this.twinkleSpd;
                 this.op = 0.25 + Math.sin(this.twinkle)*0.32;
                 this.y += this.speed;
-                if(this.y>h){
-                    this.y = -5;
-                    this.x = Math.random()*w;
-                }
+                if(this.y>h){ this.y=-5; this.x=Math.random()*w; }
             }
             draw(){
-                ctx.beginPath();
-                ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
-                ctx.fillStyle=`rgba(185,185,255,${this.op})`;
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+                ctx.fillStyle=`rgba(185,185,255,${this.op})`; ctx.fill();
             }
         }
-        function initStars(){
-            stars=[];
-            for(let i=0;i<160;i++) stars.push(new Star());
-        }
-        function loopBg(){
-            ctx.clearRect(0,0,w,h);
-            stars.forEach(s=>{s.update();s.draw();});
-            requestAnimationFrame(loopBg);
-        }
-        resizeCanvas();
-        initStars();
-        loopBg();
+        function initStars(){ stars=[]; for(let i=0;i<160;i++) stars.push(new Star()); }
+        function loopBg(){ ctx.clearRect(0,0,w,h); stars.forEach(s=>{s.update();s.draw();}); requestAnimationFrame(loopBg); }
+        resizeCanvas(); initStars(); loopBg();
         window.addEventListener("resize",()=>{resizeCanvas();initStars();});
 
-        // ========== JSZip 快速加载（并行多CDN） ==========
-        const cdnUrls = [
-            "https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/jszip/3.10.1/jszip.min.js",
-            "https://cdn.bootcdn.net/ajax/libs/jszip/3.10.1/jszip.min.js",
-            "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js",
-            "https://unpkg.com/jszip@3.10.1/dist/jszip.min.js",
-            "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
-        ];
-
-        const zipStatusEl = document.getElementById("zip-status");
-        const packBtn = document.getElementById("packBtn");
-        let zipLoaded = false;
-
-        function loadScript(src, timeout = 8000) {
-            return new Promise((resolve, reject) => {
-                const script = document.createElement("script");
-                script.src = src;
-                script.async = true;
-                const timer = setTimeout(() => {
-                    script.remove();
-                    reject(new Error(`Timeout: ${src}`));
-                }, timeout);
-                script.onload = () => {
-                    clearTimeout(timer);
-                    if (typeof JSZip !== "undefined") {
-                        resolve();
-                    } else {
-                        script.remove();
-                        reject(new Error(`JSZip undefined from ${src}`));
+        // ========== 简易ZIP生成器（纯JS，STORE模式） ==========
+        class SimpleZip {
+            constructor() {
+                this.files = []; // {name: string, data: Uint8Array, isDirectory: boolean}
+            }
+            addFile(name, data) {
+                // 确保目录自动创建
+                const parts = name.split('/');
+                let currentPath = '';
+                for (let i = 0; i < parts.length - 1; i++) {
+                    currentPath += parts[i] + '/';
+                    if (!this.files.some(f => f.name === currentPath && f.isDirectory)) {
+                        this.files.push({ name: currentPath, data: new Uint8Array(0), isDirectory: true });
                     }
-                };
-                script.onerror = () => {
-                    clearTimeout(timer);
-                    script.remove();
-                    reject(new Error(`Load error: ${src}`));
-                };
-                document.head.appendChild(script);
-            });
-        }
+                }
+                this.files.push({ name: name, data: data, isDirectory: false });
+            }
+            addTextFile(name, text) {
+                const encoder = new TextEncoder();
+                this.addFile(name, encoder.encode(text));
+            }
+            generateBlob() {
+                const encoder = new TextEncoder();
+                const localFileHeaders = [];
+                const centralDirectory = [];
+                let offset = 0;
 
-        async function loadZip() {
-            if (zipLoaded) return;
-            zipStatusEl.innerText = "⏳ 正在加载JSZip…";
+                // 排序：目录在前，文件在后（可选）
+                const sortedFiles = [...this.files].sort((a,b) => {
+                    if (a.isDirectory && !b.isDirectory) return -1;
+                    if (!a.isDirectory && b.isDirectory) return 1;
+                    return a.name.localeCompare(b.name);
+                });
 
-            // 并行尝试所有CDN，任何一个成功即完成
-            const attempts = cdnUrls.map(url => loadScript(url));
-            try {
-                await Promise.any(attempts);
-                zipLoaded = true;
-                zipStatusEl.innerText = "✅ JSZip就绪";
-                packBtn.disabled = false;
-            } catch (e) {
-                console.error(e);
-                zipStatusEl.innerText = "❌ JSZip加载失败，请检查网络后刷新";
-                packBtn.disabled = true;
+                for (const file of sortedFiles) {
+                    const nameBytes = encoder.encode(file.name);
+                    const data = file.data || new Uint8Array(0);
+                    const crc = this.crc32(data);
+                    const localHeader = new Uint8Array(30 + nameBytes.length);
+                    const view = new DataView(localHeader.buffer);
+
+                    // Local file header signature
+                    view.setUint32(0, 0x04034b50, true);
+                    view.setUint16(4, 20, true);       // version needed
+                    view.setUint16(6, 0, true);        // flags
+                    view.setUint16(8, 0, true);        // compression method (0=stored)
+                    view.setUint16(10, 0, true);       // mod time
+                    view.setUint16(12, 0, true);       // mod date
+                    view.setUint32(14, crc, true);     // crc32
+                    view.setUint32(18, data.length, true); // compressed size
+                    view.setUint32(22, data.length, true); // uncompressed size
+                    view.setUint16(26, nameBytes.length, true);
+                    view.setUint16(28, 0, true);       // extra field length
+                    localHeader.set(nameBytes, 30);
+
+                    localFileHeaders.push(localHeader);
+                    localFileHeaders.push(data);
+
+                    // Central directory entry
+                    const centralEntry = new Uint8Array(46 + nameBytes.length);
+                    const cview = new DataView(centralEntry.buffer);
+                    cview.setUint32(0, 0x02014b50, true);
+                    cview.setUint16(4, 20, true);       // version made by
+                    cview.setUint16(6, 20, true);       // version needed
+                    cview.setUint16(8, 0, true);        // flags
+                    cview.setUint16(10, 0, true);       // method
+                    cview.setUint16(12, 0, true);       // mod time
+                    cview.setUint16(14, 0, true);       // mod date
+                    cview.setUint32(16, crc, true);
+                    cview.setUint32(20, data.length, true);
+                    cview.setUint32(24, data.length, true);
+                    cview.setUint16(28, nameBytes.length, true);
+                    cview.setUint16(30, 0, true);       // extra length
+                    cview.setUint16(32, 0, true);       // comment length
+                    cview.setUint16(34, 0, true);       // disk number
+                    cview.setUint16(36, 0, true);       // internal attrs
+                    cview.setUint32(38, 0, true);       // external attrs (0 for files, 0x10 for dirs?)
+                    cview.setUint32(42, offset, true);  // relative offset of local header
+                    centralEntry.set(nameBytes, 46);
+                    centralDirectory.push(centralEntry);
+
+                    offset += localHeader.length + data.length;
+                }
+
+                // End of central directory record
+                const centralDirSize = centralDirectory.reduce((acc, entry) => acc + entry.length, 0);
+                const endRecord = new Uint8Array(22);
+                const eview = new DataView(endRecord.buffer);
+                eview.setUint32(0, 0x06054b50, true);
+                eview.setUint16(4, 0, true);       // disk number
+                eview.setUint16(6, 0, true);       // disk with central dir
+                eview.setUint16(8, centralDirectory.length, true);
+                eview.setUint16(10, centralDirectory.length, true);
+                eview.setUint32(12, centralDirSize, true);
+                eview.setUint32(16, offset, true);
+                eview.setUint16(20, 0, true);      // comment length
+
+                const totalParts = [...localFileHeaders, ...centralDirectory, endRecord];
+                let totalLength = totalParts.reduce((acc, part) => acc + part.length, 0);
+                const result = new Uint8Array(totalLength);
+                let pos = 0;
+                for (const part of totalParts) {
+                    result.set(part, pos);
+                    pos += part.length;
+                }
+                return new Blob([result], { type: 'application/zip' });
+            }
+            crc32(data) {
+                let crc = 0xFFFFFFFF;
+                for (let i = 0; i < data.length; i++) {
+                    crc ^= data[i];
+                    for (let j = 0; j < 8; j++) {
+                        if (crc & 1) crc = (crc >>> 1) ^ 0xEDB88320;
+                        else crc >>>= 1;
+                    }
+                }
+                return (crc ^ 0xFFFFFFFF) >>> 0;
             }
         }
-
-        // 立即开始加载
-        loadZip();
 
         // ========== 文件处理逻辑 ==========
         const dropZone = document.getElementById("dropZone");
@@ -518,15 +366,10 @@
             if(/^[0-9]/.test(s)) s="s_"+s;
             return s;
         }
-        function isValidId(str){
-            return /^[a-z0-9_]+$/.test(str);
-        }
+        function isValidId(str){ return /^[a-z0-9_]+$/.test(str); }
 
         function revokeAudioUrl(entry){
-            if(entry.audioUrl){
-                URL.revokeObjectURL(entry.audioUrl);
-                entry.audioUrl = null;
-            }
+            if(entry.audioUrl){ URL.revokeObjectURL(entry.audioUrl); entry.audioUrl = null; }
         }
 
         function refreshUi(){
@@ -543,10 +386,7 @@
                 inp.className="file-id-input";
                 inp.value=ent.id;
                 inp.placeholder="音频id(a-z0-9_)";
-                inp.addEventListener("input",()=>{
-                    ent.id = inp.value.trim();
-                    validateAllIds();
-                });
+                inp.addEventListener("input",()=>{ ent.id = inp.value.trim(); });
 
                 const delBtn=document.createElement("button");
                 delBtn.className="file-del";
@@ -568,10 +408,7 @@
                 li.append(nameSpan, inp, delBtn, audio);
                 fileListEl.appendChild(li);
             });
-            validateAllIds();
         }
-
-        function validateAllIds(){}
 
         function addFiles(files){
             let added=0;
@@ -592,20 +429,4 @@
         }
 
         dropZone.ondragover = e=>{e.preventDefault(); dropZone.classList.add("dragover");};
-        dropZone.ondragleave = ()=>dropZone.classList.remove("dragover");
-        dropZone.ondrop = e=>{
-            e.preventDefault();
-            dropZone.classList.remove("dragover");
-            addFiles(e.dataTransfer.files);
-        };
-        addBtn.onclick = ()=>fileInput.click();
-        fileInput.onchange = ()=>addFiles(fileInput.files);
-        clearBtn.onclick = ()=>{
-            fileEntries.forEach(entry => revokeAudioUrl(entry));
-            fileEntries=[];
-            refreshUi();
-            clearMsg();
-        };
-
-        packBtn.onclick = async ()=>{
-            if(!window.JSZip) return showMsg("JSZip未加载
+        dropZone.ondragleave = ()=>dropZone.classList.remove("dragove
