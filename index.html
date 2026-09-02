@@ -271,14 +271,6 @@
         .file-id-input:invalid{
             border-color:#ff7777;
         }
-        .file-stream-label{
-            font-size:13px;
-            color:#ddd;
-            display:flex;
-            align-items:center;
-            gap:4px;
-            user-select:none;
-        }
         .file-del{
             background:none;
             border:none;
@@ -287,6 +279,19 @@
             cursor:pointer;
             padding:0 8px;
             line-height:1;
+        }
+
+        /* 音频播放器样式 */
+        .file-audio {
+            flex-basis: 100%;
+            margin-top: 8px;
+            width: 100%;
+            outline: none;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+        }
+        audio::-webkit-media-controls-panel {
+            background-color: rgba(255,255,255,0.1);
         }
 
         .msg-area > div{
@@ -347,15 +352,9 @@
         </div>
 
         <div class="glass-card">
-            <h2 class="section-title">音频列表
-                <small style="color:#aaa">
-                    (☑️流式播放=stream:true，长报站建议开启)
-                </small>
-            </h2>
+            <h2 class="section-title">音频列表</h2>
             <div class="toolbar">
                 <button class="btn btn-primary" id="packBtn" disabled>📦 生成资源包ZIP</button>
-                <button class="btn btn-ghost" id="enableAllStream">✅ 全部开启流式</button>
-                <button class="btn btn-ghost" id="disableAllStream">❌ 全部关闭流式</button>
                 <button class="btn btn-ghost" id="clearBtn">🗑️ 清空列表</button>
                 <div class="pack-name-wrap">
                     <label>资源包名：</label>
@@ -371,16 +370,16 @@
                 <ul style="padding-left:20px;">
                     <li>仅接受 <code>.ogg</code> Vorbis 音频文件（MTR模组标准格式）</li>
                     <li>音频ID只能使用小写字母、数字、下划线，不可重复</li>
-                    <li><code>stream:true</code> 流式播放：音频边播放边加载，适合较长的报站音频，减少内存占用；短提示音可以关闭</li>
                     <li>打包后得到zip，直接放入.minecraft资源包文件夹启用</li>
-                    <li>所有处理<strong>全部在浏览器本地完成，不上传服务器</strong></li>
+                    <li>所有转换与打包<strong>全部在浏览器本地完成，不上传服务器</strong></li>
+                    <li>点击下方音频播放器可试听文件</li>
                 </ul>
             </div>
         </div>
     </main>
 
     <footer>
-        Starail MTR Sound Pack Tool | xytwuming 💫 | MTR报站资源包制作器|群1062448641
+        Starail MTR Sound Pack Tool | xytwuming 💫 | 华为液态玻璃风格UI
     </footer>
 
     <script>
@@ -468,8 +467,6 @@
         const fileInput = document.getElementById("fileInput");
         const fileListEl = document.getElementById("fileList");
         const clearBtn = document.getElementById("clearBtn");
-        const enableAllStream = document.getElementById("enableAllStream");
-        const disableAllStream = document.getElementById("disableAllStream");
         const msgBox = document.getElementById("msgBox");
         const packNameEl = document.getElementById("packName");
 
@@ -494,10 +491,19 @@
             return /^[a-z0-9_]+$/.test(str);
         }
 
+        // 释放音频URL
+        function revokeAudioUrl(entry){
+            if(entry.audioUrl){
+                URL.revokeObjectURL(entry.audioUrl);
+                entry.audioUrl = null;
+            }
+        }
+
         function refreshUi(){
+            // 释放旧URL
+            fileEntries.forEach(entry => revokeAudioUrl(entry));
             fileListEl.innerHTML="";
             fileEntries.forEach((ent,idx)=>{
-                if(ent.stream === undefined) ent.stream = true; // 默认开启流式
                 const li=document.createElement("li");
                 li.className="file-item";
                 const nameSpan=document.createElement("span");
@@ -510,41 +516,36 @@
                 inp.placeholder="音频id(a-z0-9_)";
                 inp.addEventListener("input",()=>{
                     ent.id = inp.value.trim();
+                    validateAllIds();
                 });
-
-                const streamLabel = document.createElement("label");
-                streamLabel.className = "file-stream-label";
-                const streamCheck = document.createElement("input");
-                streamCheck.type = "checkbox";
-                streamCheck.checked = ent.stream;
-                streamCheck.onchange = ()=>{
-                    ent.stream = streamCheck.checked;
-                };
-                streamLabel.appendChild(streamCheck);
-                streamLabel.append("流式播放");
 
                 const delBtn=document.createElement("button");
                 delBtn.className="file-del";
                 delBtn.innerText="×";
                 delBtn.onclick=()=>{
+                    revokeAudioUrl(ent);
                     fileEntries.splice(idx,1);
                     refreshUi();
                     clearMsg();
                 };
 
-                li.append(nameSpan,inp,streamLabel,delBtn);
+                // 创建音频播放器
+                const audio = document.createElement("audio");
+                audio.className = "file-audio";
+                audio.controls = true;
+                audio.preload = "none";
+                ent.audioUrl = URL.createObjectURL(ent.file);
+                audio.src = ent.audioUrl;
+
+                li.append(nameSpan, inp, delBtn, audio);
                 fileListEl.appendChild(li);
             });
+            validateAllIds();
         }
 
-        enableAllStream.onclick = ()=>{
-            fileEntries.forEach(e=>e.stream=true);
-            refreshUi();
-        };
-        disableAllStream.onclick = ()=>{
-            fileEntries.forEach(e=>e.stream=false);
-            refreshUi();
-        };
+        function validateAllIds(){
+            // 可留空，打包时会再次校验
+        }
 
         function addFiles(files){
             let added=0;
@@ -555,7 +556,7 @@
                 }
                 const exists = fileEntries.some(e=>e.file.name===f.name && e.file.size===f.size);
                 if(exists) continue;
-                fileEntries.push({file:f, id:sanitizeId(f.name), stream:true});
+                fileEntries.push({file:f, id:sanitizeId(f.name), audioUrl:null});
                 added++;
             }
             if(added>0){
@@ -574,6 +575,7 @@
         addBtn.onclick = ()=>fileInput.click();
         fileInput.onchange = ()=>addFiles(fileInput.files);
         clearBtn.onclick = ()=>{
+            fileEntries.forEach(entry => revokeAudioUrl(entry));
             fileEntries=[];
             refreshUi();
             clearMsg();
@@ -593,7 +595,15 @@
             try{
                 const zip = new JSZip();
                 const soundFolder = zip.folder("assets/mtr/sounds");
-                const mapObj = {};
+
+                // 生成正确格式的 sounds.json（每个事件包含 sounds 数组，带 name 和 stream）
+                const soundEvents = {};
                 for(const entry of fileEntries){
                     const i = entry.id.trim();
-                 
+                    soundFolder.file(`${i}.ogg`, entry.file);
+                    soundEvents[i] = {
+                        "sounds": [
+                            {
+                                "name": `mtr:sounds/${i}`,
+                                "stream": true
+           
