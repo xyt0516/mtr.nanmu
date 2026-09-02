@@ -1,455 +1,601 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>starail 星尘铁路mtr音频打包工具</title>
-    <!-- 仅保留 JSZip，用于打包 zip -->
-    <script src="https://cdn.bootcdn.net/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <title>Starail 星尘铁路 · MTR音频打包工具</title>
     <style>
+        :root {
+            --primary: #9999ff;
+            --primary-light: #b8b8ff;
+            --primary-dark: #7777dd;
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --text-main: #ffffff;
+            --text-sub: #ccccff;
+            --card-bg: rgba(255,255,255,0.10);
+            --shadow: 0 8px 32px rgba(0,0,0,0.25);
+        }
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
-            font-family: system-ui, sans-serif;
+            font-family: "HarmonyOS Sans", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
         body {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 80px 20px 20px;
-            background: #f5f7fa;
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--text-main);
+            position: relative;
+            background: #0b0b18;
         }
 
-        /* ========== 顶部液态玻璃横幅 ========== */
-        #liquidBanner {
+        #bg-canvas {
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            height: 60px;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
-            transform: translateY(-100%);
-            transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
-            pointer-events: none;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
         }
 
-        #liquidBanner.show {
-            transform: translateY(0);
-            pointer-events: auto;
+        .bg-gradient-anim {
+            position: fixed;
+            top:0;left:0;right:0;bottom:0;
+            z-index: -1;
+            background:
+                radial-gradient(ellipse at 10% 20%, rgba(153,153,255,0.18) 0%, transparent 45%),
+                radial-gradient(ellipse at 90% 80%, rgba(119,119,221,0.14) 0%, transparent 45%);
+            animation: gradientMove 25s ease-in-out infinite alternate;
+            pointer-events:none;
+        }
+        @keyframes gradientMove {
+            0%{ transform: translate(-3%, -3%); }
+            100%{ transform: translate(3%, 3%); }
         }
 
-        #liquidBanner .banner-text {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #1a3c5e;
-            letter-spacing: 0.5px;
-            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        header {
+            position: sticky;
+            top:0;
+            z-index:999;
+            backdrop-filter: blur(24px) saturate(160%);
+            -webkit-backdrop-filter: blur(24px) saturate(160%);
+            background: rgba(11,11,24,0.62);
+            border-bottom: 1px solid var(--glass-border);
+            box-shadow: 0 2px 20px rgba(153,153,255,0.08);
+            padding: 14px 24px;
+            transition: 0.3s;
+        }
+        .header-wrap {
+            max-width:1100px;
+            margin:0 auto;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+        .logo-title {
+            display:flex;
+            align-items:center;
+            gap:12px;
+        }
+        .logo-icon {
+            width:36px;height:36px;
+            border-radius:8px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            display:grid;
+            place-items:center;
+            font-weight:bold;
+            box-shadow: 0 0 14px rgba(153,153,255,0.45);
+            animation: logoPulse 4s ease-in-out infinite;
+        }
+        @keyframes logoPulse{
+            0%,100%{box-shadow:0 0 14px rgba(153,153,255,0.45);}
+            50%{box-shadow:0 0 24px rgba(153,153,255,0.7);}
+        }
+        .logo-text h1{
+            font-size:1.35rem;
+            font-weight:600;
+            color:#fff;
+        }
+        .logo-text p{
+            font-size:0.8rem;
+            color:var(--text-sub);
         }
 
-        h1 {
-            color: #1a3c5e;
-            border-bottom: 2px solid #2b6f9b;
-            padding-bottom: 8px;
-            margin-top: 0;
-            font-size: 2rem;
-            text-align: center;
+        main {
+            max-width:1100px;
+            margin:32px auto 60px;
+            padding:0 20px;
         }
 
-        .toolbar {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin: 20px 0;
-            align-items: center;
+        .glass-card {
+            backdrop-filter: blur(20px) saturate(150%);
+            -webkit-backdrop-filter: blur(20px) saturate(150%);
+            background: var(--card-bg);
+            border:1px solid var(--glass-border);
+            border-radius:18px;
+            padding:24px;
+            margin-bottom:24px;
+            box-shadow: var(--shadow);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .glass-card:hover{
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(153,153,255,0.12);
         }
 
-        .btn {
-            background: #2b6f9b;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.2s;
+        .section-title{
+            font-size:1.15rem;
+            font-weight:550;
+            margin-bottom:16px;
+            display:flex;
+            align-items:center;
+            gap:10px;
         }
-        .btn:hover {
-            background: #1a4f73;
-        }
-        .btn-danger {
-            background: #b33;
-        }
-        .btn-danger:hover {
-            background: #922;
-        }
-        .btn-success {
-            background: #2a7a4a;
-        }
-        .btn-success:hover {
-            background: #1d5c36;
+        .section-title::before{
+            content:"";
+            width:4px;height:18px;
+            border-radius:2px;
+            background:linear-gradient(180deg, var(--primary), var(--primary-dark));
         }
 
-        .drop-zone {
-            border: 2px dashed #aaa;
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            background: #fff;
-            margin-bottom: 20px;
-            transition: border-color 0.2s, background 0.2s;
+        .btn{
+            padding:10px 20px;
+            border-radius:10px;
+            border:none;
+            font-size:15px;
+            font-weight:500;
+            cursor:pointer;
+            transition: all 0.24s ease;
+            backdrop-filter: blur(12px);
         }
-        .drop-zone.dragover {
-            border-color: #2b6f9b;
-            background: #eaf2fa;
+        .btn-primary{
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color:#000;
+            box-shadow: 0 4px 16px rgba(153,153,255,0.35);
         }
-
-        #fileList {
-            list-style: none;
-            padding: 0;
+        .btn-primary:hover:not(:disabled){
+            filter: brightness(1.12);
+            transform: translateY(-1px);
+            box-shadow:0 6px 22px rgba(153,153,255,0.48);
         }
-        #fileList li {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: white;
-            padding: 12px 16px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-            flex-wrap: wrap;
+        .btn-primary:disabled{
+            opacity:0.45;
+            cursor:not-allowed;
+            transform:none;
+            box-shadow:none;
         }
-        #fileList li .filename {
-            flex: 1;
-            font-weight: 500;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            min-width: 120px;
+        .btn-ghost{
+            background: rgba(255,255,255,0.08);
+            color:#fff;
+            border:1px solid rgba(255,255,255,0.18);
         }
-        #fileList li input {
-            flex: 1;
-            padding: 6px 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-            min-width: 100px;
+        .btn-ghost:hover{
+            background:rgba(255,255,255,0.14);
         }
-        #fileList li input:invalid {
-            border-color: #b33;
-            background: #ffe6e6;
-        }
-        #fileList li .del {
-            background: none;
-            border: none;
-            color: #b33;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 0 6px;
+        .btn-danger{
+            background: linear-gradient(135deg,#ff6b6b,#c93838);
+            color:white;
+            box-shadow:0 4px 16px rgba(255,80,80,0.28);
         }
 
-        .info {
-            background: #e7f0fa;
-            padding: 12px;
-            border-radius: 6px;
-            margin: 16px 0;
-            font-size: 14px;
+        .toolbar{
+            display:flex;
+            flex-wrap:wrap;
+            gap:12px;
+            align-items:center;
+            margin-bottom:16px;
         }
-        .error {
-            color: #b33;
-            background: #fde8e8;
-            padding: 8px 12px;
-            border-radius: 4px;
-            margin: 8px 0;
+        .pack-name-wrap{
+            margin-left:auto;
+            display:flex;
+            align-items:center;
+            gap:10px;
         }
-        .success {
-            color: #1d5c36;
-            background: #dff0d8;
-            padding: 8px 12px;
-            border-radius: 4px;
-            margin: 8px 0;
+        .pack-name-wrap label{
+            font-size:14px;
+            color:var(--text-sub);
         }
-
-        .footer {
-            margin-top: 30px;
-            font-size: 14px;
-            color: #666;
-            text-align: center;
+        .pack-name-wrap input{
+            background:rgba(255,255,255,0.08);
+            border:1px solid rgba(255,255,255,0.18);
+            color:white;
+            border-radius:8px;
+            padding:9px 12px;
+            min-width:190px;
+            outline:none;
+            transition:0.2s;
         }
-        .footer .author {
-            margin-top: 6px;
-            font-weight: 500;
-            color: #2b6f9b;
+        .pack-name-wrap input:focus{
+            border-color:var(--primary);
+            box-shadow:0 0 0 2px rgba(153,153,255,0.25);
         }
 
-        .pack-name-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-left: auto;
-            background: white;
-            padding: 6px 12px;
-            border-radius: 6px;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        .drop-zone{
+            border:2px dashed rgba(153,153,255,0.35);
+            border-radius:14px;
+            padding:36px 20px;
+            text-align:center;
+            transition:0.28s;
+            cursor:pointer;
         }
-        .pack-name-group label {
-            font-weight: 500;
-            color: #1a3c5e;
-            white-space: nowrap;
+        .drop-zone.dragover{
+            border-color:var(--primary);
+            background:rgba(153,153,255,0.09);
         }
-        .pack-name-group input {
-            padding: 8px 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-            min-width: 180px;
+        .drop-zone p{
+            color:var(--text-sub);
+            margin-bottom:16px;
+        }
+
+        #fileList{
+            list-style:none;
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+        }
+        .file-item{
+            display:flex;
+            flex-wrap:wrap;
+            align-items:center;
+            gap:12px;
+            background:rgba(255,255,255,0.06);
+            border-radius:12px;
+            padding:14px 16px;
+            border:1px solid rgba(255,255,255,0.10);
+            transition:0.22s;
+        }
+        .file-item:hover{
+            background:rgba(255,255,255,0.09);
+        }
+        .file-name{
+            flex:1;
+            min-width:140px;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+        }
+        .file-id-input{
+            background:rgba(0,0,0,0.24);
+            border:1px solid rgba(255,255,255,0.16);
+            color:#fff;
+            border-radius:8px;
+            padding:8px 11px;
+            min-width:160px;
+            outline:none;
+        }
+        .file-id-input:focus{
+            border-color:var(--primary);
+        }
+        .file-id-input:invalid{
+            border-color:#ff7777;
+        }
+        .file-del{
+            background:none;
+            border:none;
+            color:#ff8888;
+            font-size:22px;
+            cursor:pointer;
+            padding:0 8px;
+            line-height:1;
+        }
+
+        .msg-area > div{
+            padding:12px 16px;
+            border-radius:10px;
+            margin:10px 0;
+        }
+        .msg-info{
+            background:rgba(153,153,255,0.14);
+            border:1px solid rgba(153,153,255,0.25);
+        }
+        .msg-error{
+            background:rgba(255,80,80,0.16);
+            border:1px solid rgba(255,90,90,0.28);
+        }
+        .msg-success{
+            background:rgba(90,220,140,0.15);
+            border:1px solid rgba(90,220,140,0.28);
+        }
+
+        footer{
+            text-align:center;
+            color:#8888aa;
+            font-size:13px;
+            padding:20px;
+        }
+        #fileInput{
+            display:none;
         }
     </style>
 </head>
 <body>
-    <!-- 顶部液态玻璃横幅 -->
-    <div id="liquidBanner">
-        <span class="banner-text">starail 星尘铁路mtr音频打包工具</span>
-    </div>
+    <canvas id="bg-canvas"></canvas>
+    <div class="bg-gradient-anim"></div>
 
-    <h1>🚇 starail 星尘铁路mtr音频打包工具</h1>
-
-    <div class="info">
-        ⚠️ 仅支持 <strong>.ogg</strong> 文件，请确保音频已转换为 OGG Vorbis 格式。<br>
-        每个音频需指定一个<strong>英文ID</strong>（仅小写字母、数字、下划线），作为游戏内调用名称。
-    </div>
-
-    <div class="drop-zone" id="dropZone">
-        <p>📂 拖拽 .ogg 文件到这里，或点击下方按钮添加</p>
-        <button class="btn" id="addBtn">➕ 添加文件</button>
-        <input type="file" id="fileInput" accept=".ogg,audio/ogg" multiple style="display:none">
-    </div>
-
-    <ul id="fileList"></ul>
-
-    <div class="toolbar">
-        <button class="btn btn-success" id="packBtn">📦 一键打包并下载</button>
-        <button class="btn btn-danger" id="clearBtn">🗑️ 清空全部</button>
-        <div class="pack-name-group">
-            <label for="packNameInput">资源包名称：</label>
-            <input type="text" id="packNameInput" placeholder="默认：mtr_pack" value="mtr_pack">
+    <header>
+        <div class="header-wrap">
+            <div class="logo-title">
+                <div class="logo-icon">🚇</div>
+                <div class="logo-text">
+                    <h1>Starail 星尘铁路</h1>
+                    <p>MTR 音频资源包打包工具</p>
+                </div>
+            </div>
+            <div style="color:var(--text-sub);font-size:13px" id="zip-status">⏳ 加载JSZip…</div>
         </div>
-    </div>
+    </header>
 
-    <div id="message"></div>
+    <main>
+        <div class="glass-card">
+            <h2 class="section-title">文件上传</h2>
+            <div class="drop-zone" id="dropZone">
+                <p>拖拽 OGG 音频文件至此，或点击下方按钮添加</p>
+                <button class="btn btn-primary" id="addBtn">➕ 选择音频文件</button>
+                <input type="file" multiple accept=".ogg,audio/ogg" id="fileInput">
+            </div>
+            <div class="msg-area" id="msgBox"></div>
+        </div>
 
-    <div class="footer">
-        <div>生成的 .zip 可直接作为 MTR 资源包使用</div>
-        <div class="author">xytwuming💫 制作</div>
-    </div>
+        <div class="glass-card">
+            <h2 class="section-title">音频列表</h2>
+            <div class="toolbar">
+                <button class="btn btn-primary" id="packBtn" disabled>📦 生成资源包ZIP</button>
+                <button class="btn btn-ghost" id="clearBtn">🗑️ 清空列表</button>
+                <div class="pack-name-wrap">
+                    <label>资源包名：</label>
+                    <input type="text" id="packName" value="starail_mtr_soundpack">
+                </div>
+            </div>
+            <ul id="fileList"></ul>
+        </div>
+
+        <div class="glass-card">
+            <h2 class="section-title">使用说明</h2>
+            <div style="color:var(--text-sub);line-height:1.7;font-size:14px;">
+                <ul style="padding-left:20px;">
+                    <li>仅接受 <code>.ogg</code> Vorbis 音频文件（MTR模组标准格式）</li>
+                    <li>音频ID只能使用小写字母、数字、下划线，不可重复</li>
+                    <li>打包后得到zip，直接放入.minecraft资源包文件夹启用</li>
+                    <li>所有转换与打包<strong>全部在浏览器本地完成，不上传服务器</strong></li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        Starail MTR Sound Pack Tool | xytwuming 💫 | 华为液态玻璃风格UI
+    </footer>
 
     <script>
-        (function() {
-            // ================== 顶部液态玻璃横幅控制 ==================
-            const banner = document.getElementById('liquidBanner');
-            let lastScrollY = window.scrollY;
-            let hideTimer = null;
-
-            function showBanner() {
-                banner.classList.add('show');
-                if (hideTimer) clearTimeout(hideTimer);
-                hideTimer = setTimeout(() => {
-                    banner.classList.remove('show');
-                }, 3000);
+        const canvas = document.getElementById("bg-canvas");
+        const ctx = canvas.getContext("2d");
+        let w,h,stars=[];
+        function resizeCanvas(){
+            w=canvas.width=innerWidth;
+            h=canvas.height=innerHeight;
+        }
+        class Star{
+            constructor(){
+                this.x=Math.random()*w;
+                this.y=Math.random()*h;
+                this.r=Math.random()*1.3+0.25;
+                this.speed=Math.random()*0.22+0.03;
+                this.op=Math.random()*0.65+0.12;
+                this.twinkleSpd=Math.random()*0.008;
+                this.twinkle=Math.random()*Math.PI*2;
             }
-
-            function hideBanner() {
-                if (hideTimer) clearTimeout(hideTimer);
-                banner.classList.remove('show');
-            }
-
-            window.addEventListener('scroll', () => {
-                const currentScrollY = window.scrollY;
-                const scrollDelta = currentScrollY - lastScrollY;
-
-                if (scrollDelta > 0 && currentScrollY > 100) {
-                    showBanner();
-                } else if (scrollDelta < -1) {
-                    hideBanner();
+            update(){
+                this.twinkle += this.twinkleSpd;
+                this.op = 0.25 + Math.sin(this.twinkle)*0.32;
+                this.y += this.speed;
+                if(this.y>h){
+                    this.y = -5;
+                    this.x = Math.random()*w;
                 }
-                lastScrollY = currentScrollY;
-            });
-
-            if (window.scrollY > 100) {
-                showBanner();
             }
-
-            // ================== 文件处理逻辑 ==================
-            let entries = [];
-            const fileInput = document.getElementById('fileInput');
-            const addBtn = document.getElementById('addBtn');
-            const dropZone = document.getElementById('dropZone');
-            const fileList = document.getElementById('fileList');
-            const packBtn = document.getElementById('packBtn');
-            const clearBtn = document.getElementById('clearBtn');
-            const messageDiv = document.getElementById('message');
-            const packNameInput = document.getElementById('packNameInput');
-
-            function generateDefaultId(filename) {
-                let base = filename.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-                if (/^[0-9]/.test(base)) base = 's_' + base;
-                return base;
+            draw(){
+                ctx.beginPath();
+                ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+                ctx.fillStyle=`rgba(185,185,255,${this.op})`;
+                ctx.fill();
             }
+        }
+        function initStars(){
+            stars=[];
+            for(let i=0;i<160;i++) stars.push(new Star());
+        }
+        function loopBg(){
+            ctx.clearRect(0,0,w,h);
+            stars.forEach(s=>{s.update();s.draw();});
+            requestAnimationFrame(loopBg);
+        }
+        resizeCanvas();
+        initStars();
+        loopBg();
+        window.addEventListener("resize",()=>{resizeCanvas();initStars();});
 
-            function isValidId(id) {
-                return /^[a-z0-9_]+$/.test(id);
+        const cdnUrls = [
+            "https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/jszip/3.10.1/jszip.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+        ];
+        let cdnPtr=0;
+        const zipStatusEl = document.getElementById("zip-status");
+        const packBtn = document.getElementById("packBtn");
+        async function loadZip(){
+            if(cdnPtr >= cdnUrls.length){
+                zipStatusEl.innerText="❌ JSZip加载失败，请刷新或换浏览器";
+                return;
             }
-
-            function renderEntries() {
-                fileList.innerHTML = '';
-                entries.forEach((entry, index) => {
-                    const li = document.createElement('li');
-                    const span = document.createElement('span');
-                    span.className = 'filename';
-                    span.textContent = entry.file.name + ` (${(entry.file.size/1024).toFixed(1)} KB)`;
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.value = entry.id;
-                    input.placeholder = '输入英文ID';
-                    input.addEventListener('input', function() {
-                        entry.id = this.value.trim();
-                        if (entry.id && !isValidId(entry.id)) this.setCustomValidity('只允许小写字母、数字、下划线');
-                        else this.setCustomValidity('');
-                        checkDuplicates();
-                    });
-                    const delBtn = document.createElement('button');
-                    delBtn.className = 'del';
-                    delBtn.textContent = '×';
-                    delBtn.addEventListener('click', function() {
-                        entries.splice(index, 1);
-                        renderEntries();
-                        clearMessage();
-                    });
-                    li.appendChild(span);
-                    li.appendChild(input);
-                    li.appendChild(delBtn);
-                    fileList.appendChild(li);
-                    entry.element = li;
+            zipStatusEl.innerText=`⏳ 尝试加载(${cdnPtr+1}/${cdnUrls.length})`;
+            try{
+                await new Promise((res,rej)=>{
+                    const s=document.createElement("script");
+                    s.src=cdnUrls[cdnPtr];
+                    s.onload=res;
+                    s.onerror=rej;
+                    document.head.appendChild(s);
                 });
-                checkDuplicates();
+                if(typeof JSZip !== "undefined"){
+                    zipStatusEl.innerText="✅ JSZip就绪";
+                    packBtn.disabled=false;
+                }else throw new Error("undefined");
+            }catch(e){
+                cdnPtr++;
+                loadZip();
             }
+        }
+        loadZip();
 
-            function checkDuplicates() {
-                const ids = entries.map(e => e.id.trim()).filter(id => id);
-                const dupMap = {};
-                ids.forEach(id => { dupMap[id] = (dupMap[id] || 0) + 1; });
-                entries.forEach(entry => {
-                    const input = entry.element.querySelector('input');
-                    const id = entry.id.trim();
-                    if (id && dupMap[id] > 1) {
-                        input.setCustomValidity('ID重复');
-                        input.style.borderColor = '#b33';
-                    } else if (id && !isValidId(id)) {
-                        input.style.borderColor = '#b33';
-                    } else {
-                        input.setCustomValidity('');
-                        input.style.borderColor = '';
-                    }
+        const dropZone = document.getElementById("dropZone");
+        const addBtn = document.getElementById("addBtn");
+        const fileInput = document.getElementById("fileInput");
+        const fileListEl = document.getElementById("fileList");
+        const clearBtn = document.getElementById("clearBtn");
+        const msgBox = document.getElementById("msgBox");
+        const packNameEl = document.getElementById("packName");
+
+        let fileEntries = [];
+
+        function showMsg(text, type="info"){
+            const d=document.createElement("div");
+            d.className = type==="error"?"msg-error":(type==="success"?"msg-success":"msg-info");
+            d.innerText=text;
+            msgBox.innerHTML="";
+            msgBox.appendChild(d);
+        }
+        function clearMsg(){msgBox.innerHTML="";}
+
+        function sanitizeId(name){
+            let s = name.replace(/\.[^.]+$/,"").toLowerCase();
+            s = s.replace(/[^a-z0-9_]/g,"_");
+            if(/^[0-9]/.test(s)) s="s_"+s;
+            return s;
+        }
+        function isValidId(str){
+            return /^[a-z0-9_]+$/.test(str);
+        }
+
+        function refreshUi(){
+            fileListEl.innerHTML="";
+            fileEntries.forEach((ent,idx)=>{
+                const li=document.createElement("li");
+                li.className="file-item";
+                const nameSpan=document.createElement("span");
+                nameSpan.className="file-name";
+                nameSpan.textContent = `${ent.file.name} (${(ent.file.size/1024).toFixed(1)}KB)`;
+
+                const inp=document.createElement("input");
+                inp.className="file-id-input";
+                inp.value=ent.id;
+                inp.placeholder="音频id(a-z0-9_)";
+                inp.addEventListener("input",()=>{
+                    ent.id = inp.value.trim();
+                    validateAllIds();
                 });
+
+                const delBtn=document.createElement("button");
+                delBtn.className="file-del";
+                delBtn.innerText="×";
+                delBtn.onclick=()=>{
+                    fileEntries.splice(idx,1);
+                    refreshUi();
+                    clearMsg();
+                };
+
+                li.append(nameSpan,inp,delBtn);
+                fileListEl.appendChild(li);
+            });
+            validateAllIds();
+        }
+        function validateAllIds(){
+            const ids = fileEntries.map(x=>x.id?.trim());
+            const dup = new Set();
+            ids.forEach(i=>dup.add(i));
+        }
+
+        function addFiles(files){
+            let added=0;
+            for(const f of files){
+                if(!f.name.toLowerCase().endsWith(".ogg")){
+                    showMsg(`跳过：${f.name} 不是 .ogg 文件`,"error");
+                    continue;
+                }
+                const exists = fileEntries.some(e=>e.file.name===f.name && e.file.size===f.size);
+                if(exists) continue;
+                fileEntries.push({file:f, id:sanitizeId(f.name)});
+                added++;
             }
-
-            function clearMessage() { messageDiv.innerHTML = ''; }
-
-            function showMessage(text, type = 'error') {
-                const cls = type === 'error' ? 'error' : (type === 'success' ? 'success' : 'info');
-                messageDiv.innerHTML = `<div class="${cls}">${text}</div>`;
+            if(added>0){
+                refreshUi();
+                clearMsg();
             }
+        }
 
-            function addFiles(files) {
-                let added = 0;
-                for (let f of files) {
-                    if (!f.name.toLowerCase().endsWith('.ogg')) {
-                        showMessage(`"${f.name}" 不是 .ogg 文件，已跳过`);
-                        continue;
+        dropZone.ondragover = e=>{e.preventDefault(); dropZone.classList.add("dragover");};
+        dropZone.ondragleave = ()=>dropZone.classList.remove("dragover");
+        dropZone.ondrop = e=>{
+            e.preventDefault();
+            dropZone.classList.remove("dragover");
+            addFiles(e.dataTransfer.files);
+        };
+        addBtn.onclick = ()=>fileInput.click();
+        fileInput.onchange = ()=>addFiles(fileInput.files);
+        clearBtn.onclick = ()=>{
+            fileEntries=[];
+            refreshUi();
+            clearMsg();
+        };
+
+        packBtn.onclick = async ()=>{
+            if(!window.JSZip) return showMsg("JSZip未加载完成","error");
+            if(fileEntries.length===0) return showMsg("请先添加音频文件","error");
+
+            for(const e of fileEntries){
+                const id = e.id.trim();
+                if(!id || !isValidId(id)) return showMsg(`ID非法：${id||"空ID"}，仅允许小写字母、数字、下划线`,"error");
+            }
+            const allIds = fileEntries.map(e=>e.id.trim());
+            if(new Set(allIds).size !== allIds.length) return showMsg("存在重复音频ID，请修改","error");
+
+            try{
+                const zip = new JSZip();
+                const soundFolder = zip.folder("assets/mtr/sounds");
+                const mapObj = {};
+                for(const entry of fileEntries){
+                    const i = entry.id.trim();
+                    soundFolder.file(`${i}.ogg`, entry.file);
+                    mapObj[i] = `mtr:sounds/${i}`;
+                }
+                zip.file("assets/mtr/sounds.json", JSON.stringify(mapObj,null,2));
+                
+                const packMeta = {
+                    "pack":{
+                        "pack_format":15,
+                        "description":"Generated by xytwuming's Starail website"
                     }
-                    const exists = entries.some(e => e.file.name === f.name && e.file.size === f.size);
-                    if (exists) { showMessage(`"${f.name}" 已存在，跳过`); continue; }
-                    entries.push({ file: f, id: generateDefaultId(f.name), element: null });
-                    added++;
-                }
-                if (added > 0) { renderEntries(); clearMessage(); }
+                };
+                zip.file("pack.mcmeta", JSON.stringify(packMeta,null,2));
+                zip.file("_starail_watermark.txt","This resource pack is generated by xytwuming's Starail website. Watermark file, no effect on game.");
+
+                const packName = (packNameEl.value.trim() || "soundpack");
+                const blob = await zip.generateAsync({type:"blob"});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href=url;
+                a.download = `${packName}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+                showMsg("✅ 打包成功，下载已开始！","success");
+            }catch(err){
+                console.error(err);
+                showMsg(`打包异常：${err.message}`,"error");
             }
-
-            // 拖拽事件
-            dropZone.addEventListener('dragover', e => {
-                e.preventDefault();
-                dropZone.classList.add('dragover');
-            });
-            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-            dropZone.addEventListener('drop', e => {
-                e.preventDefault();
-                dropZone.classList.remove('dragover');
-                addFiles(e.dataTransfer.files);
-            });
-            addBtn.addEventListener('click', () => fileInput.click());
-            fileInput.addEventListener('change', () => addFiles(fileInput.files));
-
-            // 清空
-            clearBtn.addEventListener('click', () => {
-                entries = [];
-                renderEntries();
-                clearMessage();
-            });
-
-            // 打包
-            packBtn.addEventListener('click', async function() {
-                let invalid = false, emptyId = false;
-                const idSet = new Set();
-                for (let entry of entries) {
-                    const id = entry.id.trim();
-                    if (!id) { emptyId = true; invalid = true; break; }
-                    if (!isValidId(id)) { invalid = true; break; }
-                    if (idSet.has(id)) { invalid = true; break; }
-                    idSet.add(id);
-                }
-                if (entries.length === 0) { showMessage('请先添加 .ogg 文件'); return; }
-                if (emptyId) { showMessage('存在空的 ID，请填写完整'); return; }
-                if (invalid) { showMessage('ID 格式无效或存在重复，请检查红色提示'); return; }
-
-                try {
-                    const zip = new JSZip();
-                    const soundsFolder = zip.folder('assets/mtr/sounds');
-                    const soundMap = {};
-
-                    for (const entry of entries) {
-                        const id = entry.id.trim();
-                        soundsFolder.file(id + ".ogg", entry.file);
-                        soundMap[id] = `mtr:sounds/${id}`;
-                    }
-
-                    const jsonStr = JSON.stringify(soundMap, null, 2);
-                    zip.file("assets/mtr/sounds.json", jsonStr);
-
-                    const packName = packNameInput.value.trim() || "mtr_pack";
-                    const zipBlob = await zip.generateAsync({ type: "blob" });
-
-                    // 下载
-                    const url = URL.createObjectURL(zipBlob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = packName + ".zip";
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    showMessage('✅ 打包成功！已开始下载。', 'success');
-                } catch (err) {
-                    console.error(err);
-                    showMessage('打包失败：' + err.message);
-                }
-            });
-        })();
+        };
     </script>
 </body>
 </html>
+
