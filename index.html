@@ -83,13 +83,13 @@
         .btn {
             padding:10px 20px; border-radius:10px; border:none; font-size:15px; font-weight:500;
             cursor:pointer; transition: all 0.24s ease;
+            display: inline-block; /* 保证 label 可以包含按钮样式 */
         }
         .btn-primary {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color:#000; box-shadow: 0 4px 16px rgba(153,153,255,0.35);
         }
         .btn-primary:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
-        .btn-primary:disabled { opacity:0.45; cursor:not-allowed; }
         .btn-ghost { background: rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.18); }
         .btn-ghost:hover { background:rgba(255,255,255,0.14); }
 
@@ -107,6 +107,24 @@
         }
         .drop-zone.dragover { border-color:var(--primary); background:rgba(153,153,255,0.09); }
         .drop-zone p { color:var(--text-sub); margin-bottom:16px; }
+
+        /* 文件输入隐藏但可交互 */
+        #fileInput {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* 使 label 表现为按钮，并允许点击 */
+        .upload-label {
+            display: inline-block;
+        }
 
         #fileList { list-style:none; display:flex; flex-direction:column; gap:10px; }
         .file-item {
@@ -129,7 +147,6 @@
         .msg-success { background:rgba(90,220,140,0.15); border:1px solid rgba(90,220,140,0.28); }
 
         footer { text-align:center; color:#8888aa; font-size:13px; padding:20px; }
-        #fileInput { display:none; }
     </style>
 </head>
 <body>
@@ -154,8 +171,11 @@
             <h2 class="section-title">文件上传</h2>
             <div class="drop-zone" id="dropZone">
                 <p>拖拽 OGG 音频文件至此，或点击下方按钮添加</p>
-                <button class="btn btn-primary" id="addBtn">➕ 选择音频文件</button>
-                <input type="file" multiple accept=".ogg,audio/ogg" id="fileInput">
+                <!-- 修改：使用 label 包裹按钮，点击即可触发文件选择 -->
+                <label class="upload-label">
+                    <span class="btn btn-primary">➕ 选择音频文件</span>
+                    <input type="file" multiple accept=".ogg,audio/ogg" id="fileInput">
+                </label>
             </div>
             <div class="msg-area" id="msgBox"></div>
         </div>
@@ -192,7 +212,7 @@
     </footer>
 
     <script>
-        // ========== 背景动画（保持不变） ==========
+        // ========== 背景动画 ==========
         const canvas = document.getElementById("bg-canvas");
         const ctx = canvas.getContext("2d");
         let w,h,stars=[];
@@ -223,10 +243,9 @@
         // ========== 简易ZIP生成器（纯JS，STORE模式） ==========
         class SimpleZip {
             constructor() {
-                this.files = []; // {name: string, data: Uint8Array, isDirectory: boolean}
+                this.files = [];
             }
             addFile(name, data) {
-                // 确保目录自动创建
                 const parts = name.split('/');
                 let currentPath = '';
                 for (let i = 0; i < parts.length - 1; i++) {
@@ -247,7 +266,6 @@
                 const centralDirectory = [];
                 let offset = 0;
 
-                // 排序：目录在前，文件在后（可选）
                 const sortedFiles = [...this.files].sort((a,b) => {
                     if (a.isDirectory && !b.isDirectory) return -1;
                     if (!a.isDirectory && b.isDirectory) return 1;
@@ -261,61 +279,58 @@
                     const localHeader = new Uint8Array(30 + nameBytes.length);
                     const view = new DataView(localHeader.buffer);
 
-                    // Local file header signature
                     view.setUint32(0, 0x04034b50, true);
-                    view.setUint16(4, 20, true);       // version needed
-                    view.setUint16(6, 0, true);        // flags
-                    view.setUint16(8, 0, true);        // compression method (0=stored)
-                    view.setUint16(10, 0, true);       // mod time
-                    view.setUint16(12, 0, true);       // mod date
-                    view.setUint32(14, crc, true);     // crc32
-                    view.setUint32(18, data.length, true); // compressed size
-                    view.setUint32(22, data.length, true); // uncompressed size
+                    view.setUint16(4, 20, true);
+                    view.setUint16(6, 0, true);
+                    view.setUint16(8, 0, true);
+                    view.setUint16(10, 0, true);
+                    view.setUint16(12, 0, true);
+                    view.setUint32(14, crc, true);
+                    view.setUint32(18, data.length, true);
+                    view.setUint32(22, data.length, true);
                     view.setUint16(26, nameBytes.length, true);
-                    view.setUint16(28, 0, true);       // extra field length
+                    view.setUint16(28, 0, true);
                     localHeader.set(nameBytes, 30);
 
                     localFileHeaders.push(localHeader);
                     localFileHeaders.push(data);
 
-                    // Central directory entry
                     const centralEntry = new Uint8Array(46 + nameBytes.length);
                     const cview = new DataView(centralEntry.buffer);
                     cview.setUint32(0, 0x02014b50, true);
-                    cview.setUint16(4, 20, true);       // version made by
-                    cview.setUint16(6, 20, true);       // version needed
-                    cview.setUint16(8, 0, true);        // flags
-                    cview.setUint16(10, 0, true);       // method
-                    cview.setUint16(12, 0, true);       // mod time
-                    cview.setUint16(14, 0, true);       // mod date
+                    cview.setUint16(4, 20, true);
+                    cview.setUint16(6, 20, true);
+                    cview.setUint16(8, 0, true);
+                    cview.setUint16(10, 0, true);
+                    cview.setUint16(12, 0, true);
+                    cview.setUint16(14, 0, true);
                     cview.setUint32(16, crc, true);
                     cview.setUint32(20, data.length, true);
                     cview.setUint32(24, data.length, true);
                     cview.setUint16(28, nameBytes.length, true);
-                    cview.setUint16(30, 0, true);       // extra length
-                    cview.setUint16(32, 0, true);       // comment length
-                    cview.setUint16(34, 0, true);       // disk number
-                    cview.setUint16(36, 0, true);       // internal attrs
-                    cview.setUint32(38, 0, true);       // external attrs (0 for files, 0x10 for dirs?)
-                    cview.setUint32(42, offset, true);  // relative offset of local header
+                    cview.setUint16(30, 0, true);
+                    cview.setUint16(32, 0, true);
+                    cview.setUint16(34, 0, true);
+                    cview.setUint16(36, 0, true);
+                    cview.setUint32(38, 0, true);
+                    cview.setUint32(42, offset, true);
                     centralEntry.set(nameBytes, 46);
                     centralDirectory.push(centralEntry);
 
                     offset += localHeader.length + data.length;
                 }
 
-                // End of central directory record
                 const centralDirSize = centralDirectory.reduce((acc, entry) => acc + entry.length, 0);
                 const endRecord = new Uint8Array(22);
                 const eview = new DataView(endRecord.buffer);
                 eview.setUint32(0, 0x06054b50, true);
-                eview.setUint16(4, 0, true);       // disk number
-                eview.setUint16(6, 0, true);       // disk with central dir
+                eview.setUint16(4, 0, true);
+                eview.setUint16(6, 0, true);
                 eview.setUint16(8, centralDirectory.length, true);
                 eview.setUint16(10, centralDirectory.length, true);
                 eview.setUint32(12, centralDirSize, true);
                 eview.setUint32(16, offset, true);
-                eview.setUint16(20, 0, true);      // comment length
+                eview.setUint16(20, 0, true);
 
                 const totalParts = [...localFileHeaders, ...centralDirectory, endRecord];
                 let totalLength = totalParts.reduce((acc, part) => acc + part.length, 0);
@@ -342,7 +357,6 @@
 
         // ========== 文件处理逻辑 ==========
         const dropZone = document.getElementById("dropZone");
-        const addBtn = document.getElementById("addBtn");
         const fileInput = document.getElementById("fileInput");
         const fileListEl = document.getElementById("fileList");
         const clearBtn = document.getElementById("clearBtn");
@@ -428,5 +442,18 @@
             }
         }
 
+        // 拖拽支持
         dropZone.ondragover = e=>{e.preventDefault(); dropZone.classList.add("dragover");};
-        dropZone.ondragleave = ()=>dropZone.classList.remove("dragove
+        dropZone.ondragleave = ()=>dropZone.classList.remove("dragover");
+        dropZone.ondrop = e=>{
+            e.preventDefault();
+            dropZone.classList.remove("dragover");
+            addFiles(e.dataTransfer.files);
+        };
+
+        // 文件选择（通过 label 自动触发，无需 JS 点击，但保留 change 事件）
+        fileInput.addEventListener("change", ()=>addFiles(fileInput.files));
+
+        // 清空按钮
+        clearBtn.onclick = ()=>{
+            fileEntries.forEach(entry => revokeAudioU
