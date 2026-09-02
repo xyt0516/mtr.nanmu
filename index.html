@@ -336,7 +336,7 @@
                     <p>MTR 音频资源包打包工具</p>
                 </div>
             </div>
-            <div style="color:var(--text-sub);font-size:13px" id="zip-status">⏳ 加载JSZip…</div>
+            <div style="color:var(--text-sub);font-size:13px" id="zip-status">⏳ 正在加载JSZip…</div>
         </div>
     </header>
 
@@ -379,10 +379,11 @@
     </main>
 
     <footer>
-        Starail MTR Sound Pack Tool | xytwuming 💫 | 华为液态玻璃风格UI
+        Starail MTR Sound Pack Tool | xytwuming 💫 | MTR报站资源包制作器 | 群1062448641
     </footer>
 
     <script>
+        // ========== 背景动画 ==========
         const canvas = document.getElementById("bg-canvas");
         const ctx = canvas.getContext("2d");
         let w,h,stars=[];
@@ -430,38 +431,68 @@
         loopBg();
         window.addEventListener("resize",()=>{resizeCanvas();initStars();});
 
+        // ========== JSZip 快速加载（并行多CDN） ==========
         const cdnUrls = [
             "https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/jszip/3.10.1/jszip.min.js",
+            "https://cdn.bootcdn.net/ajax/libs/jszip/3.10.1/jszip.min.js",
+            "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js",
+            "https://unpkg.com/jszip@3.10.1/dist/jszip.min.js",
             "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
         ];
-        let cdnPtr=0;
+
         const zipStatusEl = document.getElementById("zip-status");
         const packBtn = document.getElementById("packBtn");
-        async function loadZip(){
-            if(cdnPtr >= cdnUrls.length){
-                zipStatusEl.innerText="❌ JSZip加载失败，请刷新或换浏览器";
-                return;
-            }
-            zipStatusEl.innerText=`⏳ 尝试加载(${cdnPtr+1}/${cdnUrls.length})`;
-            try{
-                await new Promise((res,rej)=>{
-                    const s=document.createElement("script");
-                    s.src=cdnUrls[cdnPtr];
-                    s.onload=res;
-                    s.onerror=rej;
-                    document.head.appendChild(s);
-                });
-                if(typeof JSZip !== "undefined"){
-                    zipStatusEl.innerText="✅ JSZip就绪";
-                    packBtn.disabled=false;
-                }else throw new Error("undefined");
-            }catch(e){
-                cdnPtr++;
-                loadZip();
+        let zipLoaded = false;
+
+        function loadScript(src, timeout = 8000) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement("script");
+                script.src = src;
+                script.async = true;
+                const timer = setTimeout(() => {
+                    script.remove();
+                    reject(new Error(`Timeout: ${src}`));
+                }, timeout);
+                script.onload = () => {
+                    clearTimeout(timer);
+                    if (typeof JSZip !== "undefined") {
+                        resolve();
+                    } else {
+                        script.remove();
+                        reject(new Error(`JSZip undefined from ${src}`));
+                    }
+                };
+                script.onerror = () => {
+                    clearTimeout(timer);
+                    script.remove();
+                    reject(new Error(`Load error: ${src}`));
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        async function loadZip() {
+            if (zipLoaded) return;
+            zipStatusEl.innerText = "⏳ 正在加载JSZip…";
+
+            // 并行尝试所有CDN，任何一个成功即完成
+            const attempts = cdnUrls.map(url => loadScript(url));
+            try {
+                await Promise.any(attempts);
+                zipLoaded = true;
+                zipStatusEl.innerText = "✅ JSZip就绪";
+                packBtn.disabled = false;
+            } catch (e) {
+                console.error(e);
+                zipStatusEl.innerText = "❌ JSZip加载失败，请检查网络后刷新";
+                packBtn.disabled = true;
             }
         }
+
+        // 立即开始加载
         loadZip();
 
+        // ========== 文件处理逻辑 ==========
         const dropZone = document.getElementById("dropZone");
         const addBtn = document.getElementById("addBtn");
         const fileInput = document.getElementById("fileInput");
@@ -491,7 +522,6 @@
             return /^[a-z0-9_]+$/.test(str);
         }
 
-        // 释放音频URL
         function revokeAudioUrl(entry){
             if(entry.audioUrl){
                 URL.revokeObjectURL(entry.audioUrl);
@@ -500,7 +530,6 @@
         }
 
         function refreshUi(){
-            // 释放旧URL
             fileEntries.forEach(entry => revokeAudioUrl(entry));
             fileListEl.innerHTML="";
             fileEntries.forEach((ent,idx)=>{
@@ -529,7 +558,6 @@
                     clearMsg();
                 };
 
-                // 创建音频播放器
                 const audio = document.createElement("audio");
                 audio.className = "file-audio";
                 audio.controls = true;
@@ -543,9 +571,7 @@
             validateAllIds();
         }
 
-        function validateAllIds(){
-            // 可留空，打包时会再次校验
-        }
+        function validateAllIds(){}
 
         function addFiles(files){
             let added=0;
@@ -582,28 +608,4 @@
         };
 
         packBtn.onclick = async ()=>{
-            if(!window.JSZip) return showMsg("JSZip未加载完成","error");
-            if(fileEntries.length===0) return showMsg("请先添加音频文件","error");
-
-            for(const e of fileEntries){
-                const id = e.id.trim();
-                if(!id || !isValidId(id)) return showMsg(`ID非法：${id||"空ID"}，仅允许小写字母、数字、下划线`,"error");
-            }
-            const allIds = fileEntries.map(e=>e.id.trim());
-            if(new Set(allIds).size !== allIds.length) return showMsg("存在重复音频ID，请修改","error");
-
-            try{
-                const zip = new JSZip();
-                const soundFolder = zip.folder("assets/mtr/sounds");
-
-                // 生成正确格式的 sounds.json（每个事件包含 sounds 数组，带 name 和 stream）
-                const soundEvents = {};
-                for(const entry of fileEntries){
-                    const i = entry.id.trim();
-                    soundFolder.file(`${i}.ogg`, entry.file);
-                    soundEvents[i] = {
-                        "sounds": [
-                            {
-                                "name": `mtr:sounds/${i}`,
-                                "stream": true
-           
+            if(!window.JSZip) return showMsg("JSZip未加载
