@@ -5,455 +5,140 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Starail 星尘铁路 · MTR音频打包工具</title>
     <style>
-        :root {
-            --primary: #9999ff;
-            --primary-light: #b8b8ff;
-            --primary-dark: #7777dd;
-            --glass-bg: rgba(255, 255, 255, 0.08);
-            --glass-border: rgba(255, 255, 255, 0.15);
-            --text-main: #ffffff;
-            --text-sub: #ccccff;
-            --card-bg: rgba(255,255,255,0.10);
-            --shadow: 0 8px 32px rgba(0,0,0,0.25);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "HarmonyOS Sans", system-ui, sans-serif; }
-
-        body {
-            min-height: 100vh;
-            overflow-x: hidden;
-            color: var(--text-main);
-            position: relative;
-            background: #0b0b18;
-        }
-
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; }
-
-        .bg-gradient-anim {
-            position: fixed; top:0; left:0; right:0; bottom:0; z-index:-1;
-            background:
-                radial-gradient(ellipse at 10% 20%, rgba(153,153,255,0.18) 0%, transparent 45%),
-                radial-gradient(ellipse at 90% 80%, rgba(119,119,221,0.14) 0%, transparent 45%);
-            animation: gradientMove 25s ease-in-out infinite alternate;
-            pointer-events:none;
-        }
-        @keyframes gradientMove { 0%{ transform: translate(-3%, -3%); } 100%{ transform: translate(3%, 3%); } }
-
-        header {
-            position: sticky; top:0; z-index:999;
-            backdrop-filter: blur(24px) saturate(160%);
-            -webkit-backdrop-filter: blur(24px) saturate(160%);
-            background: rgba(11,11,24,0.62);
-            border-bottom: 1px solid var(--glass-border);
-            padding: 14px 24px;
-        }
-        .header-wrap { max-width:1100px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; }
-        .logo-title { display:flex; align-items:center; gap:12px; }
-        .logo-icon {
-            width:36px; height:36px; border-radius:8px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            display:grid; place-items:center; font-weight:bold;
-            box-shadow: 0 0 14px rgba(153,153,255,0.45);
-            animation: logoPulse 4s ease-in-out infinite;
-        }
-        @keyframes logoPulse { 0%,100%{box-shadow:0 0 14px rgba(153,153,255,0.45);} 50%{box-shadow:0 0 24px rgba(153,153,255,0.7);} }
-        .logo-text h1 { font-size:1.35rem; font-weight:600; }
-        .logo-text p { font-size:0.8rem; color:var(--text-sub); }
-
-        main { max-width:1100px; margin:32px auto 60px; padding:0 20px; }
-
-        .glass-card {
-            backdrop-filter: blur(20px) saturate(150%);
-            -webkit-backdrop-filter: blur(20px) saturate(150%);
-            background: var(--card-bg);
-            border:1px solid var(--glass-border);
-            border-radius:18px;
-            padding:24px;
-            margin-bottom:24px;
-            box-shadow: var(--shadow);
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
-        }
-        .glass-card:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(153,153,255,0.12); }
-
-        .section-title {
-            font-size:1.15rem; font-weight:550; margin-bottom:16px;
-            display:flex; align-items:center; gap:10px;
-        }
-        .section-title::before { content:""; width:4px; height:18px; border-radius:2px; background:linear-gradient(180deg, var(--primary), var(--primary-dark)); }
-
-        .btn {
-            padding:10px 20px; border-radius:10px; border:none; font-size:15px; font-weight:500;
-            cursor:pointer; transition: all 0.24s ease;
-            display: inline-block; /* 保证 label 可以包含按钮样式 */
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color:#000; box-shadow: 0 4px 16px rgba(153,153,255,0.35);
-        }
-        .btn-primary:hover:not(:disabled) { filter: brightness(1.12); transform: translateY(-1px); }
-        .btn-ghost { background: rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.18); }
-        .btn-ghost:hover { background:rgba(255,255,255,0.14); }
-
-        .toolbar { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-bottom:16px; }
-        .pack-name-wrap { margin-left:auto; display:flex; align-items:center; gap:10px; }
-        .pack-name-wrap label { font-size:14px; color:var(--text-sub); }
-        .pack-name-wrap input {
-            background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
-            color:white; border-radius:8px; padding:9px 12px; min-width:190px; outline:none;
-        }
-
-        .drop-zone {
-            border:2px dashed rgba(153,153,255,0.35); border-radius:14px;
-            padding:36px 20px; text-align:center; transition:0.28s; cursor:pointer;
-        }
-        .drop-zone.dragover { border-color:var(--primary); background:rgba(153,153,255,0.09); }
-        .drop-zone p { color:var(--text-sub); margin-bottom:16px; }
-
-        /* 文件输入隐藏但可交互 */
-        #fileInput {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0,0,0,0);
-            white-space: nowrap;
-            border: 0;
-        }
-
-        /* 使 label 表现为按钮，并允许点击 */
-        .upload-label {
-            display: inline-block;
-        }
-
-        #fileList { list-style:none; display:flex; flex-direction:column; gap:10px; }
-        .file-item {
-            display:flex; flex-wrap:wrap; align-items:center; gap:12px;
-            background:rgba(255,255,255,0.06); border-radius:12px; padding:14px 16px;
-            border:1px solid rgba(255,255,255,0.10);
-        }
-        .file-name { flex:1; min-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .file-id-input {
-            background:rgba(0,0,0,0.24); border:1px solid rgba(255,255,255,0.16);
-            color:#fff; border-radius:8px; padding:8px 11px; min-width:160px; outline:none;
-        }
-        .file-id-input:focus { border-color:var(--primary); }
-        .file-del { background:none; border:none; color:#ff8888; font-size:22px; cursor:pointer; padding:0 8px; }
-        .file-audio { flex-basis:100%; margin-top:8px; width:100%; outline:none; border-radius:8px; background:rgba(0,0,0,0.3); }
-
-        .msg-area > div { padding:12px 16px; border-radius:10px; margin:10px 0; }
-        .msg-info { background:rgba(153,153,255,0.14); border:1px solid rgba(153,153,255,0.25); }
-        .msg-error { background:rgba(255,80,80,0.16); border:1px solid rgba(255,90,90,0.28); }
-        .msg-success { background:rgba(90,220,140,0.15); border:1px solid rgba(90,220,140,0.28); }
-
-        footer { text-align:center; color:#8888aa; font-size:13px; padding:20px; }
+        :root{--p:#99f;--pd:#77d;--bg:#0b0b18;--card:rgba(255,255,255,.08);--border:rgba(255,255,255,.15);--sub:#ccf}
+        *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif}
+        body{min-height:100vh;color:#fff;background:var(--bg)}
+        header{position:sticky;top:0;z-index:99;backdrop-filter:blur(20px);background:rgba(11,11,24,.7);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;justify-content:space-between;align-items:center}
+        .logo{display:flex;align-items:center;gap:10px}
+        .logo-icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--p),var(--pd));display:grid;place-items:center}
+        .logo h1{font-size:1.2rem}.logo p{font-size:.75rem;color:var(--sub)}
+        main{max-width:800px;margin:24px auto;padding:0 16px}
+        .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px}
+        .card h2{font-size:1rem;margin-bottom:14px}
+        .btn{padding:10px 18px;border:none;border-radius:8px;font-size:14px;cursor:pointer}
+        .btn-primary{background:linear-gradient(135deg,var(--p),var(--pd));color:#000;font-weight:600}
+        .btn-ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid var(--border)}
+        .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+        .pack-name{margin-left:auto;display:flex;align-items:center;gap:8px}
+        .pack-name input{background:rgba(255,255,255,.08);border:1px solid var(--border);color:#fff;border-radius:6px;padding:8px 10px;min-width:160px}
+        .drop-zone{border:2px dashed rgba(153,153,255,.35);border-radius:12px;padding:28px;text-align:center}
+        .drop-zone p{color:var(--sub);margin-bottom:14px}
+        #fileInput{position:absolute;width:1px;height:1px;clip:rect(0,0,0,0);overflow:hidden}
+        #fileList{list-style:none;display:flex;flex-direction:column;gap:8px}
+        .file-item{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:rgba(255,255,255,.05);border-radius:10px;padding:12px}
+        .file-name{flex:1;min-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+        .file-id{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:6px;padding:7px 10px;min-width:140px;font-size:13px}
+        .file-del{background:none;border:none;color:#f88;font-size:20px;cursor:pointer}
+        audio{flex-basis:100%;width:100%;margin-top:6px}
+        .msg{padding:10px 14px;border-radius:8px;margin:10px 0;font-size:14px}
+        .msg-error{background:rgba(255,80,80,.15);border:1px solid rgba(255,90,90,.3)}
+        .msg-success{background:rgba(90,220,140,.15);border:1px solid rgba(90,220,140,.3)}
+        .msg-info{background:rgba(153,153,255,.14);border:1px solid rgba(153,153,255,.25)}
+        .tips{color:var(--sub);font-size:13px;line-height:1.7}
+        .tips li{margin-left:18px}
+        footer{text-align:center;color:#889;font-size:12px;padding:16px}
     </style>
 </head>
 <body>
-    <canvas id="bg-canvas"></canvas>
-    <div class="bg-gradient-anim"></div>
-
     <header>
-        <div class="header-wrap">
-            <div class="logo-title">
-                <div class="logo-icon">🚇</div>
-                <div class="logo-text">
-                    <h1>Starail 星尘铁路</h1>
-                    <p>MTR 音频资源包打包工具</p>
-                </div>
+        <div class="logo">
+            <div class="logo-icon">🚇</div>
+            <div>
+                <h1>Starail 星尘铁路</h1>
+                <p>MTR 音频资源包打包工具 群1062448641</p>
             </div>
-            <div style="color:var(--text-sub);font-size:13px">✅ 本地打包引擎已就绪</div>
         </div>
+        <span style="color:var(--sub);font-size:12px">✅ 已就绪</span>
     </header>
 
     <main>
-        <div class="glass-card">
-            <h2 class="section-title">文件上传</h2>
+        <div class="card">
+            <h2>文件上传</h2>
             <div class="drop-zone" id="dropZone">
-                <p>拖拽 OGG 音频文件至此，或点击下方按钮添加</p>
-                <!-- 修改：使用 label 包裹按钮，点击即可触发文件选择 -->
-                <label class="upload-label">
+                <p>拖拽 OGG 文件至此，或点击下方按钮</p>
+                <label>
                     <span class="btn btn-primary">➕ 选择音频文件</span>
                     <input type="file" multiple accept=".ogg,audio/ogg" id="fileInput">
                 </label>
             </div>
-            <div class="msg-area" id="msgBox"></div>
+            <div id="msgBox"></div>
         </div>
 
-        <div class="glass-card">
-            <h2 class="section-title">音频列表</h2>
+        <div class="card">
+            <h2>音频列表</h2>
             <div class="toolbar">
-                <button class="btn btn-primary" id="packBtn">📦 生成资源包ZIP</button>
-                <button class="btn btn-ghost" id="clearBtn">🗑️ 清空列表</button>
-                <div class="pack-name-wrap">
-                    <label>资源包名：</label>
+                <button class="btn btn-primary" id="packBtn">📦 生成ZIP</button>
+                <button class="btn btn-ghost" id="clearBtn">🗑️ 清空</button>
+                <div class="pack-name">
+                    <label style="font-size:13px;color:var(--sub)">资源包名：</label>
                     <input type="text" id="packName" value="starail_mtr_soundpack">
                 </div>
             </div>
             <ul id="fileList"></ul>
         </div>
 
-        <div class="glass-card">
-            <h2 class="section-title">使用说明</h2>
-            <div style="color:var(--text-sub);line-height:1.7;font-size:14px;">
-                <ul style="padding-left:20px;">
-                    <li>仅接受 <code>.ogg</code> Vorbis 音频文件（MTR模组标准格式）</li>
-                    <li>音频ID只能使用小写字母、数字、下划线，不可重复</li>
-                    <li>打包后得到zip，直接放入.minecraft资源包文件夹启用</li>
-                    <li>所有转换与打包<strong>全部在浏览器本地完成，不上传服务器</strong></li>
-                    <li>点击下方音频播放器可试听文件</li>
-                </ul>
-            </div>
+        <div class="card">
+            <h2>使用说明</h2>
+            <ul class="tips">
+                <li>仅接受 .ogg Vorbis 音频文件（MTR 模组标准格式）</li>
+                <li>音频 ID 只能使用小写字母、数字、下划线，不可重复</li>
+                <li>打包后得到 zip，放入 .minecraft 资源包文件夹启用</li>
+                <li>全部在浏览器本地完成，不上传服务器</li>
+            </ul>
         </div>
     </main>
 
-    <footer>
-        Starail MTR Sound Pack Tool | xytwuming 💫 | 华为液态玻璃风格UI
-    </footer>
+    <footer>Starail MTR Sound Pack Tool | xytwuming 💫</footer>
 
     <script>
-        // ========== 背景动画 ==========
-        const canvas = document.getElementById("bg-canvas");
-        const ctx = canvas.getContext("2d");
-        let w,h,stars=[];
-        function resizeCanvas(){ w=canvas.width=innerWidth; h=canvas.height=innerHeight; }
-        class Star{
-            constructor(){
-                this.x=Math.random()*w; this.y=Math.random()*h;
-                this.r=Math.random()*1.3+0.25; this.speed=Math.random()*0.22+0.03;
-                this.op=Math.random()*0.65+0.12; this.twinkleSpd=Math.random()*0.008;
-                this.twinkle=Math.random()*Math.PI*2;
-            }
-            update(){
-                this.twinkle += this.twinkleSpd;
-                this.op = 0.25 + Math.sin(this.twinkle)*0.32;
-                this.y += this.speed;
-                if(this.y>h){ this.y=-5; this.x=Math.random()*w; }
-            }
-            draw(){
-                ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
-                ctx.fillStyle=`rgba(185,185,255,${this.op})`; ctx.fill();
-            }
-        }
-        function initStars(){ stars=[]; for(let i=0;i<160;i++) stars.push(new Star()); }
-        function loopBg(){ ctx.clearRect(0,0,w,h); stars.forEach(s=>{s.update();s.draw();}); requestAnimationFrame(loopBg); }
-        resizeCanvas(); initStars(); loopBg();
-        window.addEventListener("resize",()=>{resizeCanvas();initStars();});
-
-        // ========== 简易ZIP生成器（纯JS，STORE模式） ==========
-        class SimpleZip {
-            constructor() {
-                this.files = [];
-            }
-            addFile(name, data) {
-                const parts = name.split('/');
-                let currentPath = '';
-                for (let i = 0; i < parts.length - 1; i++) {
-                    currentPath += parts[i] + '/';
-                    if (!this.files.some(f => f.name === currentPath && f.isDirectory)) {
-                        this.files.push({ name: currentPath, data: new Uint8Array(0), isDirectory: true });
-                    }
-                }
-                this.files.push({ name: name, data: data, isDirectory: false });
-            }
-            addTextFile(name, text) {
-                const encoder = new TextEncoder();
-                this.addFile(name, encoder.encode(text));
-            }
-            generateBlob() {
-                const encoder = new TextEncoder();
-                const localFileHeaders = [];
-                const centralDirectory = [];
-                let offset = 0;
-
-                const sortedFiles = [...this.files].sort((a,b) => {
-                    if (a.isDirectory && !b.isDirectory) return -1;
-                    if (!a.isDirectory && b.isDirectory) return 1;
-                    return a.name.localeCompare(b.name);
-                });
-
-                for (const file of sortedFiles) {
-                    const nameBytes = encoder.encode(file.name);
-                    const data = file.data || new Uint8Array(0);
-                    const crc = this.crc32(data);
-                    const localHeader = new Uint8Array(30 + nameBytes.length);
-                    const view = new DataView(localHeader.buffer);
-
-                    view.setUint32(0, 0x04034b50, true);
-                    view.setUint16(4, 20, true);
-                    view.setUint16(6, 0, true);
-                    view.setUint16(8, 0, true);
-                    view.setUint16(10, 0, true);
-                    view.setUint16(12, 0, true);
-                    view.setUint32(14, crc, true);
-                    view.setUint32(18, data.length, true);
-                    view.setUint32(22, data.length, true);
-                    view.setUint16(26, nameBytes.length, true);
-                    view.setUint16(28, 0, true);
-                    localHeader.set(nameBytes, 30);
-
-                    localFileHeaders.push(localHeader);
-                    localFileHeaders.push(data);
-
-                    const centralEntry = new Uint8Array(46 + nameBytes.length);
-                    const cview = new DataView(centralEntry.buffer);
-                    cview.setUint32(0, 0x02014b50, true);
-                    cview.setUint16(4, 20, true);
-                    cview.setUint16(6, 20, true);
-                    cview.setUint16(8, 0, true);
-                    cview.setUint16(10, 0, true);
-                    cview.setUint16(12, 0, true);
-                    cview.setUint16(14, 0, true);
-                    cview.setUint32(16, crc, true);
-                    cview.setUint32(20, data.length, true);
-                    cview.setUint32(24, data.length, true);
-                    cview.setUint16(28, nameBytes.length, true);
-                    cview.setUint16(30, 0, true);
-                    cview.setUint16(32, 0, true);
-                    cview.setUint16(34, 0, true);
-                    cview.setUint16(36, 0, true);
-                    cview.setUint32(38, 0, true);
-                    cview.setUint32(42, offset, true);
-                    centralEntry.set(nameBytes, 46);
-                    centralDirectory.push(centralEntry);
-
-                    offset += localHeader.length + data.length;
-                }
-
-                const centralDirSize = centralDirectory.reduce((acc, entry) => acc + entry.length, 0);
-                const endRecord = new Uint8Array(22);
-                const eview = new DataView(endRecord.buffer);
-                eview.setUint32(0, 0x06054b50, true);
-                eview.setUint16(4, 0, true);
-                eview.setUint16(6, 0, true);
-                eview.setUint16(8, centralDirectory.length, true);
-                eview.setUint16(10, centralDirectory.length, true);
-                eview.setUint32(12, centralDirSize, true);
-                eview.setUint32(16, offset, true);
-                eview.setUint16(20, 0, true);
-
-                const totalParts = [...localFileHeaders, ...centralDirectory, endRecord];
-                let totalLength = totalParts.reduce((acc, part) => acc + part.length, 0);
-                const result = new Uint8Array(totalLength);
-                let pos = 0;
-                for (const part of totalParts) {
-                    result.set(part, pos);
-                    pos += part.length;
-                }
-                return new Blob([result], { type: 'application/zip' });
-            }
-            crc32(data) {
-                let crc = 0xFFFFFFFF;
-                for (let i = 0; i < data.length; i++) {
-                    crc ^= data[i];
-                    for (let j = 0; j < 8; j++) {
-                        if (crc & 1) crc = (crc >>> 1) ^ 0xEDB88320;
-                        else crc >>>= 1;
-                    }
-                }
-                return (crc ^ 0xFFFFFFFF) >>> 0;
-            }
+        class Zip{
+            constructor(){this.e=[]}
+            add(p,d,t){if(t)d=new TextEncoder().encode(d);this.e.push({p,d,dir:false});let c='',s=p.split('/');for(let i=0;i<s.length-1;i++){c+=s[i]+'/';if(!this.e.some(x=>x.p===c&&x.dir))this.e.push({p:c,d:new Uint8Array(0),dir:true})}}
+            text(p,t){this.add(p,t,true)}
+            gen(){const enc=new TextEncoder(),L=[],C=[];let o=0;this.e.sort((a,b)=>a.dir!==b.dir?a.dir?-1:1:a.p.localeCompare(b.p));
+                for(const e of this.e){const n=enc.encode(e.p),d=e.d||new Uint8Array(0),c=this.crc(d),attr=e.dir?0x10:0;
+                    const lh=new Uint8Array(30+n.length),v=new DataView(lh.buffer);
+                    v.setUint32(0,0x04034b50,1);v.setUint16(4,20,1);v.setUint16(8,0,1);v.setUint32(14,c,1);v.setUint32(18,d.length,1);v.setUint32(22,d.length,1);v.setUint16(26,n.length,1);lh.set(n,30);L.push(lh,d);
+                    const ch=new Uint8Array(46+n.length),w=new DataView(ch.buffer);
+                    w.setUint32(0,0x02014b50,1);w.setUint16(4,20,1);w.setUint16(6,20,1);w.setUint32(16,c,1);w.setUint32(20,d.length,1);w.setUint32(24,d.length,1);w.setUint16(28,n.length,1);w.setUint32(38,attr,1);w.setUint32(42,o,1);ch.set(n,46);C.push(ch);o+=lh.length+d.length}
+                const cs=C.reduce((a,b)=>a+b.length,0),er=new Uint8Array(22),w=new DataView(er.buffer);
+                w.setUint32(0,0x06054b50,1);w.setUint16(8,C.length,1);w.setUint16(10,C.length,1);w.setUint32(12,cs,1);w.setUint32(16,o,1);
+                return new Blob([...L,...C,er],{type:'application/zip'})}
+            crc(d){let c=0xFFFFFFFF;for(let i=0;i<d.length;i++){c^=d[i];for(let j=0;j<8;j++)c=(c>>>1)^(0xEDB88320&-(c&1))}return(c^0xFFFFFFFF)>>>0}
         }
 
-        // ========== 文件处理逻辑 ==========
-        const dropZone = document.getElementById("dropZone");
-        const fileInput = document.getElementById("fileInput");
-        const fileListEl = document.getElementById("fileList");
-        const clearBtn = document.getElementById("clearBtn");
-        const msgBox = document.getElementById("msgBox");
-        const packNameEl = document.getElementById("packName");
+        const $=id=>document.getElementById(id),dz=$('dropZone'),fi=$('fileInput'),fl=$('fileList'),mb=$('msgBox'),pn=$('packName');
+        let items=[];
+        const msg=(t,ty='info')=>mb.innerHTML=`<div class="msg msg-${ty}">${t}</div>`;
+        const sid=n=>{let s=n.replace(/\.[^.]+$/,'').toLowerCase().replace(/[^a-z0-9_]/g,'_');if(/^[0-9]/.test(s))s='s_'+s;return s};
+        const valid=id=>/^[a-z0-9_]+$/.test(id);
 
-        let fileEntries = [];
+        function ui(){fl.innerHTML='';items.forEach((e,i)=>{const li=document.createElement('li');li.className='file-item';
+            const nm=document.createElement('span');nm.className='file-name';nm.textContent=`${e.file.name} (${(e.file.size/1024).toFixed(1)}KB)`;
+            const ip=document.createElement('input');ip.className='file-id';ip.value=e.id;ip.oninput=()=>e.id=ip.value.trim();
+            const del=document.createElement('button');del.className='file-del';del.textContent='×';del.onclick=()=>{items.splice(i,1);ui();mb.innerHTML=''};
+            const au=document.createElement('audio');au.controls=true;au.preload='none';au.src=e.url=URL.createObjectURL(e.file);
+            li.append(nm,ip,del,au);fl.appendChild(li)})}
 
-        function showMsg(text, type="info"){
-            const d=document.createElement("div");
-            d.className = type==="error"?"msg-error":(type==="success"?"msg-success":"msg-info");
-            d.innerText=text;
-            msgBox.innerHTML="";
-            msgBox.appendChild(d);
-        }
-        function clearMsg(){msgBox.innerHTML="";}
+        function add(fs){let n=0;for(const f of fs){if(!f.name.toLowerCase().endsWith('.ogg')){msg(`跳过：${f.name} 不是 .ogg 文件`,'error');continue}
+            if(items.some(e=>e.file.name===f.name&&e.file.size===f.size))continue;items.push({file:f,id:sid(f.name)});n++}
+            if(n){ui();mb.innerHTML=''}}
 
-        function sanitizeId(name){
-            let s = name.replace(/\.[^.]+$/,"").toLowerCase();
-            s = s.replace(/[^a-z0-9_]/g,"_");
-            if(/^[0-9]/.test(s)) s="s_"+s;
-            return s;
-        }
-        function isValidId(str){ return /^[a-z0-9_]+$/.test(str); }
+        dz.ondragover=e=>{e.preventDefault();dz.classList.add('dragover')};
+        dz.ondragleave=()=>dz.classList.remove('dragover');
+        dz.ondrop=e=>{e.preventDefault();dz.classList.remove('dragover');add(e.dataTransfer.files)};
+        fi.onchange=()=>add(fi.files);
+        $('clearBtn').onclick=()=>{items=[];ui();mb.innerHTML=''};
 
-        function revokeAudioUrl(entry){
-            if(entry.audioUrl){ URL.revokeObjectURL(entry.audioUrl); entry.audioUrl = null; }
-        }
-
-        function refreshUi(){
-            fileEntries.forEach(entry => revokeAudioUrl(entry));
-            fileListEl.innerHTML="";
-            fileEntries.forEach((ent,idx)=>{
-                const li=document.createElement("li");
-                li.className="file-item";
-                const nameSpan=document.createElement("span");
-                nameSpan.className="file-name";
-                nameSpan.textContent = `${ent.file.name} (${(ent.file.size/1024).toFixed(1)}KB)`;
-
-                const inp=document.createElement("input");
-                inp.className="file-id-input";
-                inp.value=ent.id;
-                inp.placeholder="音频id(a-z0-9_)";
-                inp.addEventListener("input",()=>{ ent.id = inp.value.trim(); });
-
-                const delBtn=document.createElement("button");
-                delBtn.className="file-del";
-                delBtn.innerText="×";
-                delBtn.onclick=()=>{
-                    revokeAudioUrl(ent);
-                    fileEntries.splice(idx,1);
-                    refreshUi();
-                    clearMsg();
-                };
-
-                const audio = document.createElement("audio");
-                audio.className = "file-audio";
-                audio.controls = true;
-                audio.preload = "none";
-                ent.audioUrl = URL.createObjectURL(ent.file);
-                audio.src = ent.audioUrl;
-
-                li.append(nameSpan, inp, delBtn, audio);
-                fileListEl.appendChild(li);
-            });
-        }
-
-        function addFiles(files){
-            let added=0;
-            for(const f of files){
-                if(!f.name.toLowerCase().endsWith(".ogg")){
-                    showMsg(`跳过：${f.name} 不是 .ogg 文件`,"error");
-                    continue;
-                }
-                const exists = fileEntries.some(e=>e.file.name===f.name && e.file.size===f.size);
-                if(exists) continue;
-                fileEntries.push({file:f, id:sanitizeId(f.name), audioUrl:null});
-                added++;
-            }
-            if(added>0){
-                refreshUi();
-                clearMsg();
-            }
-        }
-
-        // 拖拽支持
-        dropZone.ondragover = e=>{e.preventDefault(); dropZone.classList.add("dragover");};
-        dropZone.ondragleave = ()=>dropZone.classList.remove("dragover");
-        dropZone.ondrop = e=>{
-            e.preventDefault();
-            dropZone.classList.remove("dragover");
-            addFiles(e.dataTransfer.files);
-        };
-
-        // 文件选择（通过 label 自动触发，无需 JS 点击，但保留 change 事件）
-        fileInput.addEventListener("change", ()=>addFiles(fileInput.files));
-
-        // 清空按钮
-        clearBtn.onclick = ()=>{
-            fileEntries.forEach(entry => revokeAudioU
+        $('packBtn').onclick=async()=>{if(!items.length)return msg('请先添加音频文件','error');
+            for(const e of items){if(!e.id.trim()||!valid(e.id.trim()))return msg('ID 非法：仅允许小写字母、数字、下划线','error')}
+            if(new Set(items.map(e=>e.id.trim())).size!==items.length)return msg('存在重复 ID','error');
+            try{const z=new Zip(),ev={};
+                for(const e of items){const i=e.id.trim();z.add(`assets/mtr/sounds/${i}.ogg`,new Uint8Array(await e.file.arrayBuffer()));ev[i]={sounds:[{name:`mtr:sounds/${i}`,stream:true}]}}
+                z.text('assets/mtr/sounds.json',JSON.stringify(ev,null,2));
+                z.text('pack.mcmeta',JSON.stringify({pack:{pack_format:15,description:"Starail MTR Sound Pack"}},null,2));
+                const b=z.gen(),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=(pn.value.trim()||'soundpack')+'.zip';a.click();URL.revokeObjectURL(u);msg('✅ 打包成功，下载已开始！','success')}
+            catch(err){msg('打包异常：'+err.message,'error')}};
+    </script>
+</body>
+</html>
